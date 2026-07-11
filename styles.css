@@ -126,24 +126,65 @@ html, body {
 .home-btn:hover { background: var(--bg); }
 .home-label { white-space: nowrap; }
 
-/* ---------- Accessibility toolbar ---------- */
-.toolbar {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--line);
+/* Round icon-only header button (settings gear, close). */
+.icon-btn {
+  width: 48px; height: 48px; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--line); border-radius: 50%;
+  background: var(--app); color: var(--ink); cursor: pointer;
+}
+.icon-btn:hover { background: var(--bg); }
+.icon-btn .ms { font-size: 1.5rem; }
+
+/* ---------- Settings (full-screen overlay, same pattern as onboarding) ---------- */
+.settings {
+  position: fixed; inset: 0; z-index: 40;
+  background: var(--bg);
+  overflow-y: auto;
+}
+.settings[hidden] { display: none; }
+
+.settings-card {
+  width: 100%; max-width: 480px; margin: 0 auto;
+  min-height: 100dvh;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 16px 18px 28px;
   background: var(--app);
 }
-.tool {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  min-height: var(--target); padding: 8px 4px;
-  border: 2px solid var(--line); border-radius: 14px;
-  background: var(--app); color: var(--ink);
-  font-family: var(--font); font-size: .78rem; font-weight: 700; cursor: pointer;
+
+.settings-top {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 6px;
 }
-.tool .ms { font-size: 1.5rem; }
-.tool:hover { background: var(--bg); }
-.tool[aria-pressed="true"] {
+.settings-title { margin: 0; font-size: 1.3rem; }
+
+.setting-row {
+  display: flex; align-items: center; gap: 12px;
+  min-height: var(--target); padding: 12px 16px;
+  border: 2px solid var(--line); border-radius: 16px;
+  background: var(--app); color: var(--ink);
+  font-family: var(--font); font-size: 1.02rem; font-weight: 700;
+  text-align: left; cursor: pointer;
+}
+.setting-row:hover { background: var(--bg); }
+.setting-row .ms { font-size: 1.5rem; flex: 0 0 auto; }
+.setting-label { flex: 1; min-width: 0; }
+.setting-value { color: var(--ink-soft); font-weight: 700; font-size: .9rem; white-space: nowrap; }
+.setting-row[aria-pressed="true"] {
   background: var(--accent); color: #fff; border-color: var(--accent);
+}
+.setting-row[aria-pressed="true"] .setting-value { color: inherit; }
+
+/* Language picker: one row per language, the active one is filled. */
+.settings-group { margin: 8px 2px 0; font-size: .9rem; font-weight: 700; color: var(--ink-soft); }
+.lang-rows { display: flex; flex-direction: column; gap: 10px; }
+.setting-row .check { margin-left: auto; opacity: 0; }
+.setting-row[aria-pressed="true"] .check { opacity: 1; }
+
+.settings-link {
+  margin-top: auto; padding: 12px 4px 0;
+  color: var(--ink-soft); font-size: .9rem; font-weight: 700;
+  text-align: center;
 }
 
 /* ---------- Chat log ---------- */
@@ -176,16 +217,15 @@ html, body {
 }
 .row.user .bubble .ms { font-size: 1.15rem; vertical-align: -3px; margin-right: 6px; }
 
-/* Small "replay this aloud" button under a guide bubble. */
+/* Small icon-only "replay this aloud" button under a guide bubble. */
 .replay {
-  display: inline-flex; align-items: center; gap: 5px;
-  margin-top: 6px; padding: 6px 12px; min-height: 40px;
-  border: 2px solid var(--line); border-radius: 20px;
-  background: var(--app); color: var(--ink-soft);
-  font-family: var(--font); font-size: .8rem; font-weight: 700; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-top: 4px; width: 40px; height: 40px; padding: 0;
+  border: none; border-radius: 50%;
+  background: transparent; color: var(--ink-soft); cursor: pointer;
 }
-.replay:hover { background: var(--bg); }
-.replay .ms { font-size: 1.15rem; }
+.replay:hover { background: var(--guide-bg); }
+.replay .ms { font-size: 1.25rem; }
 
 /* Typing indicator */
 .typing { display: flex; gap: 5px; padding: 14px 18px; }
@@ -309,7 +349,8 @@ html, body {
 :root[data-contrast="high"] .row.guide .bubble { border: 2px solid #fff; }
 :root[data-contrast="high"] .badge-free { border: 2px solid #ffe500; }
 :root[data-contrast="high"] .btn.primary { color: #000; }
-:root[data-contrast="high"] .tool[aria-pressed="true"] { color: #000; }
+:root[data-contrast="high"] .setting-row[aria-pressed="true"] { color: #000; }
+:root[data-contrast="high"] .replay { border: 2px solid #fff; }
 :root[data-contrast="high"] .opt .dot,
 :root[data-contrast="high"] .avatar {
   background: #000 !important; color: #fff !important; border: 2px solid #fff;
@@ -420,4 +461,6 @@ html, body {
 @media (max-width: 500px) {
   .app { border-left: none; border-right: none; }
   .home-label { display: none; }
+  /* Icon-only on phones: match the round settings button beside it. */
+  .home-btn { width: 48px; height: 48px; padding: 0; justify-content: center; border-radius: 50%; }
 }

@@ -53,6 +53,10 @@ const S = {
     noMic: "Speaking isn't available here, but you can tap any picture.",
     soundOn: "Read aloud is on. I will speak every message out loud.",
     readAgain: "Read again",
+    settings: "Settings", close: "Close settings", startOver: "Start over",
+    textSize: "Text size", textNormal: "Normal", textLarge: "Large", textXlarge: "Extra large",
+    contrast: "High contrast", readAloud: "Read aloud", language: "Language",
+    on: "On", off: "Off", forOrgs: "For organizations",
     cats: { food:"Food", people:"Meet people", kids:"Kids & family", health:"Health", learn:"Learn", money:"Money help" },
     free: "Free",
     justWalkIn: "Just walk in", stepFree: "Step-free", asl: "ASL",
@@ -90,6 +94,10 @@ const S = {
     noMic: "Parler n'est pas possible ici, mais tu peux toucher une image.",
     soundOn: "La lecture à voix haute est activée.",
     readAgain: "Relire",
+    settings: "Réglages", close: "Fermer les réglages", startOver: "Recommencer",
+    textSize: "Taille du texte", textNormal: "Normale", textLarge: "Grande", textXlarge: "Très grande",
+    contrast: "Contraste élevé", readAloud: "Lecture à voix haute", language: "Langue",
+    on: "Activé", off: "Désactivé", forOrgs: "Pour les organismes",
     cats: { food:"Nourriture", people:"Rencontrer des gens", kids:"Enfants et famille", health:"Santé", learn:"Apprendre", money:"Aide financière" },
     free: "Gratuit",
     justWalkIn: "Entre sans rendez-vous", stepFree: "Sans marches", asl: "ASL",
@@ -127,6 +135,10 @@ const S = {
     noMic: "Hablar no está disponible aquí, pero puedes tocar una imagen.",
     soundOn: "La lectura en voz alta está activada.",
     readAgain: "Leer otra vez",
+    settings: "Ajustes", close: "Cerrar los ajustes", startOver: "Empezar de nuevo",
+    textSize: "Tamaño del texto", textNormal: "Normal", textLarge: "Grande", textXlarge: "Muy grande",
+    contrast: "Contraste alto", readAloud: "Leer en voz alta", language: "Idioma",
+    on: "Activado", off: "Desactivado", forOrgs: "Para organizaciones",
     cats: { food:"Comida", people:"Conocer gente", kids:"Niños y familia", health:"Salud", learn:"Aprender", money:"Ayuda con dinero" },
     free: "Gratis",
     justWalkIn: "Entra sin cita", stepFree: "Sin escalones", asl: "ASL",
@@ -344,8 +356,10 @@ function addGuide(text, { spoken } = {}) {
   row.querySelector('.bubble').textContent = text;
   const say = spoken || text;
   const replay = el(
-    `<button type="button" class="replay"><span class="ms" aria-hidden="true">volume_up</span>${t('readAgain')}</button>`
+    `<button type="button" class="replay"><span class="ms" aria-hidden="true">volume_up</span></button>`
   );
+  replay.setAttribute('aria-label', t('readAgain'));
+  replay.setAttribute('title', t('readAgain'));
   replay.addEventListener('click', () => speak(say));
   row.appendChild(replay);
   chat.appendChild(row);
@@ -701,14 +715,53 @@ $('#btnMic').addEventListener('click', () => {
   rec.start();
 });
 
-/* ---------- accessibility controls ---------- */
+/* ---------- accessibility controls (in the settings overlay) ---------- */
 function applySettings() {
   document.documentElement.dataset.text = state.text;
   document.documentElement.dataset.contrast = state.contrast ? 'high' : 'normal';
   $('#btnContrast').setAttribute('aria-pressed', String(state.contrast));
   $('#btnSound').setAttribute('aria-pressed', String(state.sound));
-  $('#langLabel').textContent = { en:'English', fr:'Français', es:'Español' }[state.lang];
+  document.querySelectorAll('.lang-row').forEach(b =>
+    b.setAttribute('aria-pressed', String(b.dataset.lang === state.lang)));
+
+  /* Localize the panel + header so a language switch re-labels everything. */
+  $('#settingsTitle').textContent = t('settings');
+  $('#settingsClose').setAttribute('aria-label', t('close'));
+  $('#btnSettings').setAttribute('aria-label', t('settings'));
+  $('#labelText').textContent = t('textSize');
+  $('#labelContrast').textContent = t('contrast');
+  $('#labelSound').textContent = t('readAloud');
+  $('#labelLang').textContent = t('language');
+  $('#orgLink').textContent = t('forOrgs');
+  $('.home-label').textContent = t('startOver');
+  $('#startOver').setAttribute('aria-label', t('startOver'));
+
+  /* Every setting shows its current state in words, not just a toggle. */
+  $('#valueText').textContent = { normal:t('textNormal'), large:t('textLarge'), xlarge:t('textXlarge') }[state.text];
+  $('#valueContrast').textContent = state.contrast ? t('on') : t('off');
+  $('#valueSound').textContent = state.sound ? t('on') : t('off');
 }
+
+/* Full-screen settings panel, opened from the header gear. The chat keeps
+   living behind it (a real page change would wipe the conversation). */
+const settingsPanel = $('#settings');
+let settingsReturnFocus = null;
+function openSettings() {
+  settingsReturnFocus = document.activeElement;
+  settingsPanel.hidden = false;
+  $('#app').inert = true;
+  $('#settingsTitle').focus({ preventScroll: true });
+}
+function closeSettings() {
+  settingsPanel.hidden = true;
+  $('#app').inert = false;
+  settingsReturnFocus?.focus?.();
+}
+$('#btnSettings').addEventListener('click', openSettings);
+$('#settingsClose').addEventListener('click', closeSettings);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !settingsPanel.hidden) closeSettings();
+});
 
 $('#btnText').addEventListener('click', () => {
   state.text = { normal:'large', large:'xlarge', xlarge:'normal' }[state.text];
@@ -729,11 +782,15 @@ $('#btnSound').addEventListener('click', () => {
   if (state.sound) speak(t('soundOn')); else stopSpeech();
 });
 
-$('#btnLang').addEventListener('click', () => {
-  state.lang = { en:'fr', fr:'es', es:'en' }[state.lang];
-  localStorage.setItem('belong-lang', state.lang);
-  applySettings();
-  restart(); /* re-greet in the new language */
+document.querySelectorAll('.lang-row').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.lang === state.lang) return;
+    state.lang = btn.dataset.lang;
+    localStorage.setItem('belong-lang', state.lang);
+    applySettings();
+    closeSettings(); /* before restart(), so the panel never covers onboarding */
+    restart();       /* re-greet in the new language */
+  });
 });
 
 function restart() {

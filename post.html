@@ -15,8 +15,10 @@
     /* Small page-specific layer on top of the shared stylesheet. */
     .app { overflow-y: auto; }
     .form-wrap { padding: 18px 16px 28px; display: flex; flex-direction: column; gap: 18px; }
-    .lead { margin: 0; font-size: 1rem; color: var(--ink-soft); line-height: 1.5; }
+    #postForm { display: flex; flex-direction: column; gap: 18px; }
     .field { display: flex; flex-direction: column; gap: 8px; }
+    fieldset.field { margin: 0; border: none; padding: 0; }
+    fieldset.field legend { margin-bottom: 8px; }
     .field > label, .field > .field-label { font-weight: 700; font-size: 1rem; }
     .field input[type="text"], .field input[type="time"], .field select {
       min-height: var(--target); border: 2px solid var(--line); border-radius: 14px;
@@ -56,7 +58,7 @@
     }
     .location-result:last-child { border-bottom: 0; }
     .location-result:hover, .location-result:focus { background: var(--bg); }
-    #locationMap { height: 300px; border: 2px solid var(--line); border-radius: 14px; z-index: 1; }
+    #locationMap { height: 240px; border: 2px solid var(--line); border-radius: 14px; z-index: 1; }
     .map-status { margin: 8px 2px 0; color: var(--ink-soft); font-size: .85rem; line-height: 1.4; }
     .leaflet-control-attribution { font-size: 10px; }
     .submit-btn {
@@ -78,7 +80,7 @@
       <div class="avatar" aria-hidden="true"><span class="ms">storefront</span></div>
       <div class="who">
         <p class="who-name">Post an opportunity</p>
-        <p class="who-sub">About one minute. No training needed.</p>
+        <p class="who-sub">Takes about a minute.</p>
       </div>
       <a class="home-btn" href="index.html">
         <span class="ms" aria-hidden="true">chat_bubble</span>
@@ -87,25 +89,23 @@
     </header>
 
     <div class="form-wrap">
-      <p class="lead">Add an opportunity once and it appears in the Belong prototype on this device. A shared database, website widget, and text line are documented next steps.</p>
-
       <form id="postForm">
-        <div class="field" style="margin-bottom:18px">
+        <div class="field">
           <label for="fOrg">Your organization</label>
           <input id="fOrg" type="text" required placeholder="KW Habilitation" />
         </div>
 
-        <div class="field" style="margin-bottom:18px">
-          <label for="fTitle">What is it? (keep it short)</label>
+        <div class="field">
+          <label for="fTitle">What is it?</label>
           <input id="fTitle" type="text" required maxlength="40" placeholder="Community hot lunch" />
         </div>
 
-        <fieldset class="field" style="margin:0 0 18px; border:none; padding:0">
-          <legend class="field-label" style="margin-bottom:8px">Pick a picture</legend>
+        <fieldset class="field">
+          <legend class="field-label">Pick a picture</legend>
           <div class="cat-grid" id="catGrid"></div>
         </fieldset>
 
-        <div class="field" style="margin-bottom:18px">
+        <div class="field">
           <label for="fDay">What day?</label>
           <select id="fDay" required>
             <option value="0">Sunday</option><option value="1">Monday</option>
@@ -115,15 +115,15 @@
           </select>
         </div>
 
-        <div class="field" style="margin-bottom:18px">
+        <div class="field">
           <label for="fTime">What time?</label>
           <input id="fTime" type="time" required value="12:00" />
         </div>
 
-        <div class="field" style="margin-bottom:18px">
-          <label for="fPlace">Where? (place and street)</label>
+        <div class="field">
+          <label for="fPlace">Where?</label>
           <input id="fPlace" type="text" required autocomplete="off" aria-describedby="mapHelp mapStatus" aria-expanded="false" placeholder="Type an address or choose it on the map" />
-          <p class="map-help" id="mapHelp">Start typing to search. You can also move the map and tap the exact location.</p>
+          <p class="map-help" id="mapHelp">Type to search, or tap the map.</p>
           <div class="location-picker" id="locationPicker">
             <div class="location-results" id="locationResults" role="listbox" aria-label="Location suggestions"></div>
             <div id="locationMap" aria-label="Interactive location map"></div>
@@ -131,15 +131,15 @@
           </div>
         </div>
 
-        <fieldset class="field" style="margin:0 0 18px; border:none; padding:0">
-          <legend class="field-label" style="margin-bottom:8px">Tick what's true</legend>
-          <label class="check-row" style="margin-bottom:8px">
+        <fieldset class="field">
+          <legend class="field-label">Tick what's true</legend>
+          <label class="check-row">
             <input type="checkbox" id="aStepFree" checked />
             <img src="assets/pictograms/wheelchair.png" alt="" /><span>Step-free entrance</span>
           </label>
-          <label class="check-row" style="margin-bottom:8px">
+          <label class="check-row">
             <input type="checkbox" id="aWalkIn" checked />
-            <img src="assets/pictograms/welcome.png" alt="" /><span>No sign-up — just walk in</span>
+            <img src="assets/pictograms/welcome.png" alt="" /><span>No sign-up, just walk in</span>
           </label>
           <label class="check-row">
             <input type="checkbox" id="aAsl" />

@@ -47,23 +47,10 @@
         <span class="ms" aria-hidden="true">restart_alt</span>
         <span class="home-label">Start over</span>
       </button>
+      <button class="icon-btn" id="btnSettings" type="button" aria-label="Settings" aria-haspopup="dialog">
+        <span class="ms" aria-hidden="true">settings</span>
+      </button>
     </header>
-
-    <!-- Accessibility controls, always one tap away. Each is a big, labelled target. -->
-    <div class="toolbar" role="group" aria-label="Accessibility options">
-      <button class="tool" id="btnText" type="button" aria-label="Make text bigger">
-        <span class="ms" aria-hidden="true">format_size</span><span class="tool-label">Text size</span>
-      </button>
-      <button class="tool" id="btnContrast" type="button" aria-pressed="false">
-        <span class="ms" aria-hidden="true">contrast</span><span class="tool-label">Contrast</span>
-      </button>
-      <button class="tool" id="btnSound" type="button" aria-pressed="false">
-        <span class="ms" aria-hidden="true">volume_up</span><span class="tool-label">Read aloud</span>
-      </button>
-      <button class="tool" id="btnLang" type="button" aria-label="Change language">
-        <span class="ms" aria-hidden="true">language</span><span class="tool-label" id="langLabel">English</span>
-      </button>
-    </div>
 
     <!-- The conversation. role="log" + aria-live means a screen reader speaks each new message. -->
     <main class="chat" id="chat" role="log" aria-live="polite" aria-relevant="additions" tabindex="-1"></main>
@@ -82,8 +69,58 @@
 
     <p class="credit">
       Symbols: <a href="https://arasaac.org" target="_blank" rel="noopener">ARASAAC</a> — Sergio Palao, Gobierno de Aragón (CC BY-NC-SA)
-      · <a href="post.html">For organizations</a>
     </p>
+  </div>
+
+  <!-- Settings: the accessibility controls, one tap behind the gear.
+       Same PECS/AAC rule as everywhere: every row is icon + word, and
+       shows its current state in words too. -->
+  <div class="settings" id="settings" hidden role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="settings-card">
+      <div class="settings-top">
+        <h2 class="settings-title" id="settingsTitle" tabindex="-1">Settings</h2>
+        <button type="button" class="icon-btn" id="settingsClose" aria-label="Close settings">
+          <span class="ms" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <button class="setting-row" id="btnText" type="button">
+        <span class="ms" aria-hidden="true">format_size</span>
+        <span class="setting-label" id="labelText">Text size</span>
+        <span class="setting-value" id="valueText"></span>
+      </button>
+      <button class="setting-row" id="btnContrast" type="button" aria-pressed="false">
+        <span class="ms" aria-hidden="true">contrast</span>
+        <span class="setting-label" id="labelContrast">High contrast</span>
+        <span class="setting-value" id="valueContrast"></span>
+      </button>
+      <button class="setting-row" id="btnSound" type="button" aria-pressed="false">
+        <span class="ms" aria-hidden="true">volume_up</span>
+        <span class="setting-label" id="labelSound">Read aloud</span>
+        <span class="setting-value" id="valueSound"></span>
+      </button>
+
+      <p class="settings-group" id="labelLang">Language</p>
+      <div class="lang-rows" role="group" aria-labelledby="labelLang">
+        <button class="setting-row lang-row" type="button" data-lang="en" aria-pressed="false">
+          <span class="ms" aria-hidden="true">language</span>
+          <span class="setting-label">English</span>
+          <span class="check ms" aria-hidden="true">check</span>
+        </button>
+        <button class="setting-row lang-row" type="button" data-lang="fr" aria-pressed="false">
+          <span class="ms" aria-hidden="true">language</span>
+          <span class="setting-label">Français</span>
+          <span class="check ms" aria-hidden="true">check</span>
+        </button>
+        <button class="setting-row lang-row" type="button" data-lang="es" aria-pressed="false">
+          <span class="ms" aria-hidden="true">language</span>
+          <span class="setting-label">Español</span>
+          <span class="check ms" aria-hidden="true">check</span>
+        </button>
+      </div>
+
+      <a class="settings-link" id="orgLink" href="post.html">For organizations</a>
+    </div>
   </div>
 
   <script src="app.js?v=2"></script>
