@@ -39,6 +39,21 @@
     .check-row input { width: 26px; height: 26px; accent-color: var(--accent); flex: 0 0 auto; }
     .check-row img { width: 30px; height: 30px; object-fit: contain; }
     .check-row span { font-weight: 700; }
+    .map-actions { display: flex; gap: 8px; }
+    .map-preview-btn {
+      min-height: var(--target); border: 2px solid var(--accent); border-radius: 14px;
+      padding: 8px 16px; background: var(--app); color: var(--accent);
+      font-family: var(--font); font-size: 1rem; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .map-preview-btn:hover { background: var(--bg); }
+    .map-help { margin: 0; color: var(--ink-soft); font-size: .85rem; line-height: 1.4; }
+    .map-preview {
+      display: none; overflow: hidden; border: 2px solid var(--line);
+      border-radius: 14px; background: var(--bg);
+    }
+    .map-preview iframe { display: block; width: 100%; height: 240px; border: 0; }
+    .map-preview p { margin: 0; padding: 10px 12px; font-size: .85rem; color: var(--ink-soft); }
     .submit-btn {
       min-height: 64px; border: none; border-radius: 16px; cursor: pointer;
       background: var(--accent); color: #fff; font-family: var(--font);
@@ -102,7 +117,17 @@
 
         <div class="field" style="margin-bottom:18px">
           <label for="fPlace">Where? (place and street)</label>
-          <input id="fPlace" type="text" required placeholder="97 Victoria St N, Kitchener" />
+          <input id="fPlace" type="text" required autocomplete="street-address" aria-describedby="mapHelp" placeholder="97 Victoria St N, Kitchener" />
+          <p class="map-help" id="mapHelp">Include the street number, street name, and city so people get the right directions.</p>
+          <div class="map-actions">
+            <button class="map-preview-btn" id="previewMap" type="button">
+              <span class="ms" aria-hidden="true">map</span>Check on Google Maps
+            </button>
+          </div>
+          <div class="map-preview" id="mapPreview">
+            <iframe id="mapFrame" title="Google Maps preview of the opportunity location" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            <p>Check that the map shows the right place before you post.</p>
+          </div>
         </div>
 
         <fieldset class="field" style="margin:0 0 18px; border:none; padding:0">
@@ -163,6 +188,27 @@
       return `${h}:${String(m).padStart(2, '0')} ${half}`;
     }
 
+    const placeInput = document.getElementById('fPlace');
+    const mapPreview = document.getElementById('mapPreview');
+    const mapFrame = document.getElementById('mapFrame');
+
+    document.getElementById('previewMap').addEventListener('click', () => {
+      const address = placeInput.value.trim();
+      if (!address) {
+        placeInput.reportValidity();
+        placeInput.focus();
+        return;
+      }
+      mapFrame.src = `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
+      mapPreview.style.display = 'block';
+      mapPreview.scrollIntoView({ block: 'nearest' });
+    });
+
+    placeInput.addEventListener('input', () => {
+      mapPreview.style.display = 'none';
+      mapFrame.removeAttribute('src');
+    });
+
     document.getElementById('postForm').addEventListener('submit', e => {
       e.preventDefault();
       const cat = document.querySelector('input[name="cat"]:checked').value;
@@ -186,6 +232,8 @@
       document.getElementById('doneNote').style.display = 'block';
       document.getElementById('doneNote').scrollIntoView({ block: 'nearest' });
       e.target.reset();
+      mapPreview.style.display = 'none';
+      mapFrame.removeAttribute('src');
     });
   </script>
 </body>
