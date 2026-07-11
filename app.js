@@ -223,12 +223,39 @@ function speakLocal(text) {
    NOTE: this is a client-side demo key — it is visible in the page source.
    Use a free-tier / usage-restricted key. If left empty, the app cleanly
    falls back to the browser's built-in voice (speakLocal). */
-const ELEVEN_API_KEY  = '';                       /* <-- paste ElevenLabs key here */
-const ELEVEN_VOICE_ID = '21m00Tcm4TlvDq8ikWAM';   /* "Rachel" — a natural preset voice */
+const ELEVEN_API_KEY  = '653d8c29147ad8e3cd2f3a57fab476ad5dd992a7e1f7f9fe3113d960242869e2'; /* <-- ElevenLabs key */
+const ELEVEN_VOICE_ID = 'EXAVITQu4vr4xnSDxMaL';   /* "Sarah" — warm, reassuring, free-plan voice */
 const ELEVEN_MODEL    = 'eleven_multilingual_v2'; /* handles en / fr / es */
 
 let currentAudio = null;                 /* the utterance currently playing */
 const _ttsCache = new Map();             /* lang|text -> object URL, avoids re-fetching */
+
+/* Browsers block audio until the user interacts with the page. Track that
+   first gesture so the opening greeting can play in the ElevenLabs voice. */
+let audioUnlocked = false;
+let pendingGreeting = null;
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  if (pendingGreeting) { const txt = pendingGreeting; pendingGreeting = null; speak(txt); }
+}
+['pointerdown', 'keydown', 'touchstart'].forEach(ev =>
+  document.addEventListener(ev, unlockAudio, { once: false })
+);
+
+/* Show a small, one-time notice if the natural voice can't be used, so a
+   failed ElevenLabs call is visible instead of silently sounding robotic. */
+let _ttsWarned = false;
+function warnTTS(reason) {
+  console.error('[Belong TTS] ElevenLabs unavailable — using browser voice.', reason);
+  if (_ttsWarned) return;
+  _ttsWarned = true;
+  try {
+    const note = el(`<div class="row guide"><div class="bubble" style="opacity:.7;font-size:.85em"></div></div>`);
+    note.querySelector('.bubble').textContent = '⚠️ Natural voice unavailable — using the built-in voice. (See console for details.)';
+    chat.appendChild(note); scroll();
+  } catch (_) {}
+}
 
 /* Stop whatever is currently speaking (ElevenLabs audio or Web Speech). */
 function stopSpeech() {
@@ -236,19 +263,28 @@ function stopSpeech() {
   if ('speechSynthesis' in window) speechSynthesis.cancel();
 }
 
-function playAudioUrl(url) {
+function playAudioUrl(url, fallbackText) {
   stopSpeech();
   const audio = new Audio(url);
   currentAudio = audio;
-  audio.play().catch(() => {});   /* autoplay can be blocked before user interaction */
+  audio.play().catch(err => {
+    /* Autoplay blocked before the first user gesture: expected, not an error —
+       just fall back to the built-in voice so it's never silent. */
+    if (fallbackText) speakLocal(fallbackText);
+  });
 }
 
 async function speak(text) {
   if (!text) return;
   if (!ELEVEN_API_KEY) { stopSpeech(); speakLocal(text); return; }
 
+  /* Before the first user interaction, audio can't play at all — stay silent
+     and remember the line so unlockAudio() can speak it in the natural voice
+     the moment the user taps/clicks (avoids a robotic greeting on load). */
+  if (!audioUnlocked) { pendingGreeting = text; return; }
+
   const key = state.lang + '|' + text;
-  if (_ttsCache.has(key)) { playAudioUrl(_ttsCache.get(key)); return; }
+  if (_ttsCache.has(key)) { playAudioUrl(_ttsCache.get(key), text); return; }
 
   try {
     const res = await fetch(
@@ -263,12 +299,17 @@ async function speak(text) {
         })
       }
     );
-    if (!res.ok) throw new Error(`ElevenLabs ${res.status}`);
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status} ${res.statusText} ${detail}`.trim());
+    }
     const url = URL.createObjectURL(await res.blob());
     _ttsCache.set(key, url);
-    playAudioUrl(url);
+    playAudioUrl(url, text);
   } catch (err) {
-    console.warn('ElevenLabs TTS failed, falling back to browser voice:', err);
+    /* Network/CORS failure (common when opened via file://) or a non-OK
+       status (401 bad key, 402 plan/voice). Surface it, then fall back. */
+    warnTTS(err && err.message ? err.message : err);
     speakLocal(text);
   }
 }

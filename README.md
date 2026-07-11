@@ -16,6 +16,9 @@ python3 -m http.server 4173
 # open http://localhost:4173/post.html  ← the organization posting form
 ```
 
+> **Open it through the server (`http://localhost:…`), not by double-clicking `index.html`.**
+> A `file://` page has no real origin, so browsers (Firefox especially) block the cross-origin `fetch()` to the ElevenLabs voice API and can serve a stale cached `app.js` — the read-aloud silently falls back to the robotic built-in voice. Serving over HTTP fixes both.
+
 ## The two flows (the deliverables)
 
 1. **How a community member discovers an event:** open the app → Robin asks "What do you need today?" → tap a picture (e.g. Food) → tap when → get an Easy Read event card → tap "I'll go" → optional reminder. Two taps from opening the app to seeing where lunch is.
@@ -43,7 +46,7 @@ This app is built on methods disability services already use every day. It's not
 - **Screen readers:** the chat is a `role="log"` live region — each new message is announced; every control is a real, labelled `<button>`; pictograms are `alt=""` because their word label is always beside them.
 - **High-contrast mode:** one tap → pure black/white/yellow, symbols lifted onto white pills.
 - **Text size:** one tap cycles 18 → 22 → 27px root size; the whole UI scales (all rem units).
-- **Read aloud:** one tap → every message and card is spoken (Web Speech API); every bubble has a "Read again" button.
+- **Read aloud:** one tap → every message and card is spoken with a natural, human-sounding voice (ElevenLabs Generative Voice AI), falling back to the browser's built-in Web Speech voice when offline or no API key is set; every bubble has a "Read again" button.
 - **Speak instead of typing:** mic button (Web Speech recognition where the browser supports it; graceful message where it doesn't).
 - **Three languages:** English / Français / Español — the whole conversation, one tap.
 - **Colour = meaning, never colour alone:** each category owns one colour + one pictogram + one word; green is reserved for "Free"; works in greyscale.
