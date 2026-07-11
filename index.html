@@ -18,7 +18,24 @@
 <body>
   <a class="skip-link" href="#chat">Skip to messages</a>
 
-  <div class="app">
+  <!-- First-run onboarding: 4 tap-to-choose menus (location, interests,
+       age group, accessibility needs). Same PECS/AAC rule as the rest of
+       the app: every option is colour + icon + word, always together. -->
+  <div class="onboarding" id="onboarding" hidden>
+    <div class="onb-card">
+      <div class="onb-top">
+        <div class="onb-progress" id="onbProgress" role="img"></div>
+        <button type="button" class="onb-skip" id="onbSkip">Skip setup</button>
+      </div>
+      <div class="avatar avatar-lg" aria-hidden="true"><span class="ms">volunteer_activism</span></div>
+      <h1 class="onb-title" id="onbTitle" tabindex="-1"></h1>
+      <p class="onb-sub" id="onbSub"></p>
+      <div class="onb-options" id="onbOptions"></div>
+      <div class="onb-actions" id="onbActions"></div>
+    </div>
+  </div>
+
+  <div class="app" id="app">
     <!-- Who you're talking to. A named, friendly guide reads as a person, not a database. -->
     <header class="app-header">
       <div class="avatar" aria-hidden="true"><span class="ms">volunteer_activism</span></div>
