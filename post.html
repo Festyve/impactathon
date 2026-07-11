@@ -123,15 +123,17 @@
         <div class="field">
           <label for="fNotice">When should members hear about it?</label>
           <select id="fNotice">
-            <option value="1">1 day before — casual or drop-in</option>
-            <option value="3" selected>3 days before — best for most events</option>
-            <option value="7">1 week before — when you need numbers</option>
+            <option value="1">1 hour before — last-minute heads-up</option>
+            <option value="12">12 hours before — same-day plans</option>
+            <option value="24">1 day before — casual or drop-in</option>
+            <option value="72" selected>3 days before — best for most events</option>
+            <option value="168">1 week before — when you need numbers</option>
             <option value="custom">Choose a custom date and time…</option>
           </select>
           <div class="field custom-notice" id="customNoticeField" hidden>
             <label for="fNotifyAt">Custom notification date and time</label>
-            <input id="fNotifyAt" type="datetime-local" />
-            <p class="map-help">Choose exactly when this opportunity should start appearing to members.</p>
+            <input id="fNotifyAt" type="datetime-local" step="1" />
+            <p class="map-help">Choose exactly when this opportunity should start appearing to members — down to the second.</p>
           </div>
         </div>
 
@@ -273,7 +275,7 @@
 
     function localDateTimeValue(date) {
       const pad = number => String(number).padStart(2, '0');
-      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
     }
 
     function updateNoticeControl() {
@@ -291,7 +293,7 @@
       registrationFields.hidden = !registrationToggle.checked;
       registrationUrl.required = registrationToggle.checked;
       if (registrationToggle.checked) {
-        noticeSelect.value = '7';
+        noticeSelect.value = '168';
         updateNoticeControl();
       }
     });
@@ -411,8 +413,15 @@
         day: new Date(`${document.getElementById('fDate').value}T12:00:00`).getDay(),
         time: niceTime(document.getElementById('fTime').value),
         place: document.getElementById('fPlace').value.trim(),
-        noticeDays: noticeSelect.value === 'custom' ? null : +noticeSelect.value,
-        notifyAt: noticeSelect.value === 'custom' ? notifyAtInput.value : '',
+        noticeHours: noticeSelect.value === 'custom' ? null : +noticeSelect.value,
+        /* Every event gets a concrete notify time: the event start minus the
+           chosen lead, or the organizer's exact custom moment. */
+        notifyAt: noticeSelect.value === 'custom'
+          ? notifyAtInput.value
+          : localDateTimeValue(new Date(
+              new Date(`${document.getElementById('fDate').value}T${document.getElementById('fTime').value}`)
+              - +noticeSelect.value * 3600 * 1000
+            )),
         registrationRequired: registrationToggle.checked,
         registrationUrl: registrationToggle.checked ? registrationUrl.value.trim() : '',
         capacity: registrationToggle.checked ? +(document.getElementById('fCapacity').value || 0) : 0,
@@ -422,11 +431,8 @@
       list.push(ev);
       localStorage.setItem('belong-events', JSON.stringify(list));
       localStorage.setItem('belong-last-org', ev.org);
-      const shareDate = ev.notifyAt ? new Date(ev.notifyAt) : new Date(`${ev.date}T${document.getElementById('fTime').value}`);
-      if (!ev.notifyAt) shareDate.setDate(shareDate.getDate() - ev.noticeDays);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      document.getElementById('doneMessage').textContent = shareDate <= today
+      const shareDate = new Date(ev.notifyAt);
+      document.getElementById('doneMessage').textContent = shareDate <= new Date()
         ? 'Posted. Members are getting a message about it now. '
         : `Posted. Members will get a message about it ${shareDate.toLocaleString('en-CA', { month:'long', day:'numeric', hour:'numeric', minute:'2-digit' })}. `;
       document.getElementById('doneNote').style.display = 'block';
@@ -434,7 +440,7 @@
       e.target.reset();
       document.getElementById('fOrg').value = ev.org;
       dateInput.value = tomorrow.toISOString().slice(0, 10);
-      noticeSelect.value = '3';
+      noticeSelect.value = '72';
       notifyAtInput.value = '';
       updateNoticeControl();
       registrationFields.hidden = true;
