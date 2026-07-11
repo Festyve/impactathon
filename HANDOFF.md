@@ -33,7 +33,7 @@ The incentive is reach without duplicate composition: one short, accessible list
 ## What is built
 
 - Static, buildless community-member app in `index.html`, `styles.css`, and `app.js`.
-- Need/category -> time -> Easy Read card -> “I’ll go” -> reminder conversation.
+- No-setup, no-typing-required need/category -> time -> Easy Read card -> “I’ll go” -> reminder conversation. A “not sure” choice shows all categories, and previous option grids disappear after a choice to prevent a growing wall of controls.
 - Eleven seeded Kitchener-Waterloo opportunities.
 - Organization posting form in `post.html`; posted items join discovery on the same browser. Organization name is remembered, the date defaults to tomorrow, location uses a free OpenStreetMap picker, and most events need no optional fields.
 - Organizer-selected notice timing in one compact control: 1 day for casual/drop-in events, 3 days by default, 7 days when attendance numbers are needed, or an exact custom date and time. The prototype uses that choice to decide when a posted event appears in discovery.

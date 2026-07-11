@@ -29,7 +29,7 @@ const state = {
 /* ---------- strings (English, French, Spanish) ---------- */
 const S = {
   en: {
-    greeting: "Hi, I'm Robin. I help you find free things to do near you.",
+    greeting: "Hi, I'm Robin. Tap one picture. I'll show you something nearby.",
     firstThen: "First: tap a picture. Then: I show you what's on.",
     whatNeed: "What do you need today?",
     whenGo: "When do you want to go?",
@@ -54,6 +54,7 @@ const S = {
     soundOn: "Read aloud is on. I will speak every message out loud.",
     readAgain: "Read again",
     cats: { food:"Food", people:"Meet people", kids:"Kids & family", health:"Health", learn:"Learn", money:"Money help" },
+    notSure: "I'm not sure — show me anything", back: "Go back",
     free: "Free",
     register: "Register", registrationNeeded: "Sign-up needed",
     justWalkIn: "Just walk in", stepFree: "Step-free", asl: "ASL",
@@ -67,7 +68,7 @@ const S = {
     access: { lowvision:"Low vision or blind", deaf:"Deaf or hard of hearing", mobility:"Physical or mobility needs", intellectual:"Intellectual or learning disability", sensory:"Autism or sensory sensitivity", none:"None of these" },
   },
   fr: {
-    greeting: "Bonjour, je m'appelle Robin. Je t'aide à trouver des activités gratuites près de chez toi.",
+    greeting: "Bonjour, je m'appelle Robin. Touche une image. Je te montrerai quelque chose près de chez toi.",
     firstThen: "D'abord : touche une image. Ensuite : je te montre ce qu'il y a.",
     whatNeed: "De quoi as-tu besoin aujourd'hui ?",
     whenGo: "Quand veux-tu y aller ?",
@@ -92,6 +93,7 @@ const S = {
     soundOn: "La lecture à voix haute est activée.",
     readAgain: "Relire",
     cats: { food:"Nourriture", people:"Rencontrer des gens", kids:"Enfants et famille", health:"Santé", learn:"Apprendre", money:"Aide financière" },
+    notSure: "Je ne sais pas — montre-moi tout", back: "Retour",
     free: "Gratuit",
     register: "S'inscrire", registrationNeeded: "Inscription requise",
     justWalkIn: "Entre sans rendez-vous", stepFree: "Sans marches", asl: "ASL",
@@ -105,7 +107,7 @@ const S = {
     access: { lowvision:"Basse vision ou aveugle", deaf:"Sourd ou malentendant", mobility:"Besoins physiques ou de mobilité", intellectual:"Déficience intellectuelle ou trouble d'apprentissage", sensory:"Autisme ou sensibilité sensorielle", none:"Aucun de ces besoins" },
   },
   es: {
-    greeting: "Hola, soy Robin. Te ayudo a encontrar cosas gratis cerca de ti.",
+    greeting: "Hola, soy Robin. Toca una imagen. Te mostraré algo cerca de ti.",
     firstThen: "Primero: toca una imagen. Después: te muestro qué hay.",
     whatNeed: "¿Qué necesitas hoy?",
     whenGo: "¿Cuándo quieres ir?",
@@ -130,6 +132,7 @@ const S = {
     soundOn: "La lectura en voz alta está activada.",
     readAgain: "Leer otra vez",
     cats: { food:"Comida", people:"Conocer gente", kids:"Niños y familia", health:"Salud", learn:"Aprender", money:"Ayuda con dinero" },
+    notSure: "No estoy seguro — muéstrame todo", back: "Volver",
     free: "Gratis",
     register: "Inscribirme", registrationNeeded: "Inscripción necesaria",
     justWalkIn: "Entra sin cita", stepFree: "Sin escalones", asl: "ASL",
@@ -302,11 +305,6 @@ function addGuide(text, { spoken } = {}) {
   const row = el(`<div class="row guide"><div class="bubble"></div></div>`);
   row.querySelector('.bubble').textContent = text;
   const say = spoken || text;
-  const replay = el(
-    `<button type="button" class="replay"><span class="ms" aria-hidden="true">volume_up</span>${t('readAgain')}</button>`
-  );
-  replay.addEventListener('click', () => speak(say));
-  row.appendChild(replay);
   chat.appendChild(row);
   if (state.sound) speak(say);
   scroll();
@@ -332,8 +330,7 @@ function addOptions(options, { stack } = {}) {
     const btn = el(`<button type="button" class="opt ${o.cls || ''} ${o.pict ? '' : 'simple'}">${visual}<span></span></button>`);
     btn.querySelector('span:last-child').textContent = o.label;
     btn.addEventListener('click', () => {
-      box.querySelectorAll('button').forEach(b => { b.disabled = true; });
-      btn.classList.add('picked');
+      wrap.remove();
       o.onPick();
     });
     box.appendChild(btn);
@@ -548,21 +545,24 @@ function startOnboarding() {
   onbIndex = 0;
   renderOnboardStep();
 }
-$('#onbSkip').addEventListener('click', finishOnboarding);
+$('#onbSkip')?.addEventListener('click', finishOnboarding);
 
 /* ---------- conversation flow ---------- */
 function greet() {
   addGuide(t('greeting'));
-  addGuide(t('firstThen'));   /* First-Then board: announce the sequence */
   askCategory(t('whatNeed'));
 }
 
 function askCategory(prompt) {
   addGuide(prompt);
-  addOptions(CATS.map(c => ({
+  const choices = CATS.map(c => ({
     pict: c.pict, cls: c.cls, label: t('cats')[c.key],
     onPick: () => { addUser(t('cats')[c.key], c.pict); state.cat = c.key; askWhen(); },
-  })));
+  }));
+  choices.push({ pict:'help', cls:'c-learn', label:t('notSure'), onPick:() => {
+    addUser(t('notSure'), 'help'); state.cat = null; askWhen();
+  }});
+  addOptions(choices);
 }
 
 function askWhen() {
@@ -571,6 +571,7 @@ function askWhen() {
     { ms:'today',          label:t('today'), onPick:() => { addUser(t('today')); pickEvents('today'); } },
     { ms:'date_range',     label:t('week'),  onPick:() => { addUser(t('week'));  pickEvents('week'); } },
     { ms:'all_inclusive',  label:t('any'),   onPick:() => { addUser(t('any'));   pickEvents('any'); } },
+    { ms:'arrow_back',     label:t('back'),  onPick:() => { addUser(t('back')); askCategory(t('whatNeed')); } },
   ], { stack:true });
 }
 
@@ -578,7 +579,7 @@ function pickEvents(when) {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const inCat = EVENTS.filter(e => {
-    if (e.cat !== state.cat) return false;
+    if (state.cat && e.cat !== state.cat) return false;
     if (!e.date) return true;
     const eventDate = new Date(`${e.date}T12:00:00`);
     const visibleFrom = e.notifyAt ? new Date(e.notifyAt) : new Date(eventDate);
@@ -664,14 +665,14 @@ function routeText(raw) {
   askCategory(t('dontUnderstand'));
 }
 
-$('#composer').addEventListener('submit', e => {
+$('#composer')?.addEventListener('submit', e => {
   e.preventDefault();
   const input = $('#msgInput');
   if (input.value.trim()) routeText(input.value.trim());
   input.value = '';
 });
 
-$('#btnMic').addEventListener('click', () => {
+$('#btnMic')?.addEventListener('click', () => {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return addGuide(t('noMic'));
   const rec = new SR();
@@ -724,13 +725,10 @@ function restart() {
   stopSpeech();
   chat.innerHTML = '';
   state.cat = null; state.queue = []; state.shown = 0;
-  localStorage.removeItem('belong-onboarded');
-  onbAnswers.location = null; onbAnswers.interests = []; onbAnswers.age = null; onbAnswers.access = [];
-  startOnboarding();
+  greet();
 }
 $('#startOver').addEventListener('click', restart);
 
 /* ---------- go ---------- */
 applySettings();
-if (localStorage.getItem('belong-onboarded') === '1') greet();
-else startOnboarding();
+greet();
