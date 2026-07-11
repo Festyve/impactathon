@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="Belong — a simple, spoken, texting-style way to find free things to do near you. Built for everyone." />
+  <title>Belong — find things to do near you</title>
+
+  <!-- Online assets: Atkinson Hyperlegible is a typeface designed by the Braille Institute for low-vision readers.
+       Material Symbols gives us big, friendly, universally familiar icons. Both load free from Google Fonts. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#chat">Skip to messages</a>
+
+  <div class="app">
+    <!-- Who you're talking to. A named, friendly guide reads as a person, not a database. -->
+    <header class="app-header">
+      <div class="avatar" aria-hidden="true"><span class="ms">volunteer_activism</span></div>
+      <div class="who">
+        <p class="who-name">Robin</p>
+        <p class="who-sub">Finds free things near you</p>
+      </div>
+      <button class="home-btn" id="startOver" type="button">
+        <span class="ms" aria-hidden="true">restart_alt</span>
+        <span class="home-label">Start over</span>
+      </button>
+    </header>
+
+    <!-- Accessibility controls, always one tap away. Each is a big, labelled target. -->
+    <div class="toolbar" role="group" aria-label="Accessibility options">
+      <button class="tool" id="btnText" type="button" aria-label="Make text bigger">
+        <span class="ms" aria-hidden="true">format_size</span><span class="tool-label">Text size</span>
+      </button>
+      <button class="tool" id="btnContrast" type="button" aria-pressed="false">
+        <span class="ms" aria-hidden="true">contrast</span><span class="tool-label">Contrast</span>
+      </button>
+      <button class="tool" id="btnSound" type="button" aria-pressed="false">
+        <span class="ms" aria-hidden="true">volume_up</span><span class="tool-label">Read aloud</span>
+      </button>
+      <button class="tool" id="btnLang" type="button" aria-label="Change language">
+        <span class="ms" aria-hidden="true">language</span><span class="tool-label" id="langLabel">English</span>
+      </button>
+    </div>
+
+    <!-- The conversation. role="log" + aria-live means a screen reader speaks each new message. -->
+    <main class="chat" id="chat" role="log" aria-live="polite" aria-relevant="additions" tabindex="-1"></main>
+
+    <!-- Typing is optional. Everything works by tapping the big buttons above. -->
+    <form class="composer" id="composer">
+      <button type="button" class="mic" id="btnMic" aria-label="Speak instead of typing">
+        <span class="ms" aria-hidden="true">mic</span>
+      </button>
+      <label class="sr-only" for="msgInput">Type a message to Robin</label>
+      <input id="msgInput" class="composer-input" type="text" placeholder="Type, or tap a button" autocomplete="off" />
+      <button type="submit" class="send" aria-label="Send message">
+        <span class="ms" aria-hidden="true">send</span>
+      </button>
+    </form>
+
+    <p class="credit">
+      Symbols: <a href="https://arasaac.org" target="_blank" rel="noopener">ARASAAC</a> — Sergio Palao, Gobierno de Aragón (CC BY-NC-SA)
+      · <a href="post.html">For organizations</a>
+    </p>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
