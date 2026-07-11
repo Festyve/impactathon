@@ -18,7 +18,8 @@
     .lead { margin: 0; font-size: 1rem; color: var(--ink-soft); line-height: 1.5; }
     .field { display: flex; flex-direction: column; gap: 8px; }
     .field > label, .field > .field-label { font-weight: 700; font-size: 1rem; }
-    .field input[type="text"], .field input[type="time"], .field select {
+    .field input[type="text"], .field input[type="time"], .field input[type="date"],
+    .field input[type="url"], .field input[type="number"], .field select {
       min-height: var(--target); border: 2px solid var(--line); border-radius: 14px;
       padding: 0 16px; font-family: var(--font); font-size: 1rem;
       background: var(--app); color: var(--ink); width: 100%;
@@ -59,6 +60,23 @@
     #locationMap { height: 300px; border: 2px solid var(--line); border-radius: 14px; z-index: 1; }
     .map-status { margin: 8px 2px 0; color: var(--ink-soft); font-size: .85rem; line-height: 1.4; }
     .leaflet-control-attribution { font-size: 10px; }
+    .notice-grid { display: grid; gap: 8px; }
+    .notice-pick { position: relative; }
+    .notice-pick input { position: absolute; opacity: 0; }
+    .notice-pick span {
+      display: block; min-height: var(--target); padding: 11px 14px;
+      border: 2px solid var(--line); border-radius: 14px; cursor: pointer;
+      font-weight: 700; line-height: 1.35;
+    }
+    .notice-pick small { display: block; color: var(--ink-soft); font-weight: 400; margin-top: 2px; }
+    .notice-pick input:checked + span { border-color: var(--accent); background: var(--kids-bg); }
+    .notice-pick input:focus-visible + span { outline: 4px solid var(--focus); outline-offset: 2px; }
+    .optional {
+      margin: 0 0 18px; border: 2px solid var(--line); border-radius: 14px;
+      padding: 0 14px; background: var(--app);
+    }
+    .optional summary { min-height: var(--target); display: flex; align-items: center; font-weight: 700; cursor: pointer; }
+    .optional-body { padding: 4px 0 16px; }
     .submit-btn {
       min-height: 64px; border: none; border-radius: 16px; cursor: pointer;
       background: var(--accent); color: #fff; font-family: var(--font);
@@ -106,14 +124,27 @@
         </fieldset>
 
         <div class="field" style="margin-bottom:18px">
-          <label for="fDay">What day?</label>
-          <select id="fDay" required>
-            <option value="0">Sunday</option><option value="1">Monday</option>
-            <option value="2" selected>Tuesday</option><option value="3">Wednesday</option>
-            <option value="4">Thursday</option><option value="5">Friday</option>
-            <option value="6">Saturday</option>
-          </select>
+          <label for="fDate">What date?</label>
+          <input id="fDate" type="date" required />
         </div>
+
+        <fieldset class="field" style="margin:0 0 18px; border:none; padding:0">
+          <legend class="field-label" style="margin-bottom:8px">When should members hear about it?</legend>
+          <div class="notice-grid">
+            <label class="notice-pick">
+              <input type="radio" name="notice" value="1" />
+              <span>1 day before<small>Casual or drop-in event</small></span>
+            </label>
+            <label class="notice-pick">
+              <input type="radio" name="notice" value="3" checked />
+              <span>3 days before<small>Best for most events</small></span>
+            </label>
+            <label class="notice-pick">
+              <input type="radio" name="notice" value="7" />
+              <span>1 week before<small>Use when you need numbers or sign-up</small></span>
+            </label>
+          </div>
+        </fieldset>
 
         <div class="field" style="margin-bottom:18px">
           <label for="fTime">What time?</label>
@@ -147,13 +178,29 @@
           </label>
         </fieldset>
 
+        <details class="optional">
+          <summary>More options (only if you need them)</summary>
+          <div class="optional-body">
+            <label class="check-row" style="margin-bottom:12px">
+              <input type="checkbox" id="aRegistration" />
+              <span>People must register</span>
+            </label>
+            <div class="field" id="registrationFields" hidden>
+              <label for="fRegisterUrl">Registration link</label>
+              <input id="fRegisterUrl" type="url" placeholder="https://example.org/register" />
+              <label for="fCapacity">Maximum number of people (optional)</label>
+              <input id="fCapacity" type="number" min="1" inputmode="numeric" placeholder="20" />
+            </div>
+          </div>
+        </details>
+
         <button class="submit-btn" type="submit">
           <span class="ms" aria-hidden="true">campaign</span>Post it
         </button>
       </form>
 
-      <p class="done-note" id="doneNote">
-        Posted! It's live in the app right now.
+      <p class="done-note" id="doneNote" role="status">
+        <span id="doneMessage">Posted! It's live in the app right now.</span>
         <a href="index.html">Open the app and see it →</a>
       </p>
     </div>
@@ -189,6 +236,26 @@
       h = h % 12 || 12;
       return `${h}:${String(m).padStart(2, '0')} ${half}`;
     }
+
+    const dateInput = document.getElementById('fDate');
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    dateInput.min = new Date().toISOString().slice(0, 10);
+    dateInput.value = tomorrow.toISOString().slice(0, 10);
+
+    const savedOrg = localStorage.getItem('belong-last-org');
+    if (savedOrg) document.getElementById('fOrg').value = savedOrg;
+
+    const registrationToggle = document.getElementById('aRegistration');
+    const registrationFields = document.getElementById('registrationFields');
+    const registrationUrl = document.getElementById('fRegisterUrl');
+    registrationToggle.addEventListener('change', () => {
+      registrationFields.hidden = !registrationToggle.checked;
+      registrationUrl.required = registrationToggle.checked;
+      if (registrationToggle.checked) {
+        document.querySelector('input[name="notice"][value="7"]').checked = true;
+      }
+    });
 
     const placeInput = document.getElementById('fPlace');
     const locationPicker = document.getElementById('locationPicker');
@@ -295,17 +362,35 @@
         pict: cat,
         title: document.getElementById('fTitle').value.trim(),
         org: document.getElementById('fOrg').value.trim(),
-        day: +document.getElementById('fDay').value,
+        date: document.getElementById('fDate').value,
+        day: new Date(`${document.getElementById('fDate').value}T12:00:00`).getDay(),
         time: niceTime(document.getElementById('fTime').value),
         place: document.getElementById('fPlace').value.trim(),
+        noticeDays: +document.querySelector('input[name="notice"]:checked').value,
+        registrationRequired: registrationToggle.checked,
+        registrationUrl: registrationToggle.checked ? registrationUrl.value.trim() : '',
+        capacity: registrationToggle.checked ? +(document.getElementById('fCapacity').value || 0) : 0,
         access,
       };
       const list = JSON.parse(localStorage.getItem('belong-events') || '[]');
       list.push(ev);
       localStorage.setItem('belong-events', JSON.stringify(list));
+      localStorage.setItem('belong-last-org', ev.org);
+      const shareDate = new Date(`${ev.date}T12:00:00`);
+      shareDate.setDate(shareDate.getDate() - ev.noticeDays);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      document.getElementById('doneMessage').textContent = shareDate <= today
+        ? 'Posted. Members can see it now. '
+        : `Posted. Members should start seeing it ${shareDate.toLocaleDateString('en-CA', { month:'long', day:'numeric' })}. `;
       document.getElementById('doneNote').style.display = 'block';
       document.getElementById('doneNote').scrollIntoView({ block: 'nearest' });
       e.target.reset();
+      document.getElementById('fOrg').value = ev.org;
+      dateInput.value = tomorrow.toISOString().slice(0, 10);
+      document.querySelector('input[name="notice"][value="3"]').checked = true;
+      registrationFields.hidden = true;
+      registrationUrl.required = false;
       locationResults.classList.remove('show');
       mapStatus.textContent = 'Tap the map to choose the exact location.';
     });

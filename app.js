@@ -55,6 +55,7 @@ const S = {
     readAgain: "Read again",
     cats: { food:"Food", people:"Meet people", kids:"Kids & family", health:"Health", learn:"Learn", money:"Money help" },
     free: "Free",
+    register: "Register", registrationNeeded: "Sign-up needed",
     justWalkIn: "Just walk in", stepFree: "Step-free", asl: "ASL",
     onbSkip: "Skip setup", onbNext: "Next", onbBack: "Back", onbDone: "Done",
     locTitle: "Where are you?", locSub: "This helps me find things close to you.",
@@ -92,6 +93,7 @@ const S = {
     readAgain: "Relire",
     cats: { food:"Nourriture", people:"Rencontrer des gens", kids:"Enfants et famille", health:"Santé", learn:"Apprendre", money:"Aide financière" },
     free: "Gratuit",
+    register: "S'inscrire", registrationNeeded: "Inscription requise",
     justWalkIn: "Entre sans rendez-vous", stepFree: "Sans marches", asl: "ASL",
     onbSkip: "Passer", onbNext: "Suivant", onbBack: "Retour", onbDone: "Terminé",
     locTitle: "Où es-tu ?", locSub: "Ça m'aide à trouver des activités près de chez toi.",
@@ -129,6 +131,7 @@ const S = {
     readAgain: "Leer otra vez",
     cats: { food:"Comida", people:"Conocer gente", kids:"Niños y familia", health:"Salud", learn:"Aprender", money:"Ayuda con dinero" },
     free: "Gratis",
+    register: "Inscribirme", registrationNeeded: "Inscripción necesaria",
     justWalkIn: "Entra sin cita", stepFree: "Sin escalones", asl: "ASL",
     onbSkip: "Omitir", onbNext: "Siguiente", onbBack: "Atrás", onbDone: "Listo",
     locTitle: "¿Dónde estás?", locSub: "Esto me ayuda a encontrar cosas cerca de ti.",
@@ -251,10 +254,9 @@ const ELEVEN_API_KEY  = '';                       /* <-- paste ElevenLabs key he
 const ELEVEN_VOICE_ID = '21m00Tcm4TlvDq8ikWAM';   /* "Rachel" — a natural preset voice */
 const ELEVEN_MODEL    = 'eleven_multilingual_v2'; /* handles en / fr / es */
 
-let currentAudio = null;                 /* the utterance currently playing */
-const _ttsCache = new Map();             /* lang|text -> object URL, avoids re-fetching */
+let currentAudio = null;
+const _ttsCache = new Map();
 
-/* Stop whatever is currently speaking (ElevenLabs audio or Web Speech). */
 function stopSpeech() {
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
   if ('speechSynthesis' in window) speechSynthesis.cancel();
@@ -264,16 +266,14 @@ function playAudioUrl(url) {
   stopSpeech();
   const audio = new Audio(url);
   currentAudio = audio;
-  audio.play().catch(() => {});   /* autoplay can be blocked before user interaction */
+  audio.play().catch(() => {});
 }
 
 async function speak(text) {
   if (!text) return;
   if (!ELEVEN_API_KEY) { stopSpeech(); speakLocal(text); return; }
-
   const key = state.lang + '|' + text;
   if (_ttsCache.has(key)) { playAudioUrl(_ttsCache.get(key)); return; }
-
   try {
     const res = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${ELEVEN_VOICE_ID}?output_format=mp3_44100_128`,
@@ -344,11 +344,14 @@ function addOptions(options, { stack } = {}) {
 
 /* Easy Read card: one fact + one picture per row. */
 function addCard(ev) {
-  const dayName = DAY_NAMES[state.lang][ev.day];
-  const chips = (ev.access || []).map(a => {
+  const dayName = ev.date
+    ? new Date(`${ev.date}T12:00:00`).toLocaleDateString(VOICE_LANG[state.lang], { weekday:'long', month:'long', day:'numeric' })
+    : DAY_NAMES[state.lang][ev.day];
+  let chips = (ev.access || []).map(a => {
     const chipPict = { stepFree:'wheelchair', asl:'deaf', justWalkIn:'welcome' }[a];
     return `<span class="chip"><img src="${pict(chipPict)}" alt="">${t(a)}</span>`;
   }).join('');
+  if (ev.registrationRequired) chips += `<span class="chip"><span class="ms" aria-hidden="true">how_to_reg</span>${t('registrationNeeded')}</span>`;
   const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(ev.place);
   const card = el(`
     <div class="row guide"><div class="card">
@@ -366,11 +369,17 @@ function addCard(ev) {
           <button type="button" class="btn primary act-go"><span class="ms" aria-hidden="true">check</span>${t('go')}</button>
           <a class="btn" href="${mapsUrl}" target="_blank" rel="noopener"><span class="ms" aria-hidden="true">map</span>${t('directions')}</a>
         </div>
+        <a class="btn act-register" hidden target="_blank" rel="noopener"><span class="ms" aria-hidden="true">how_to_reg</span>${t('register')}</a>
       </div>
     </div></div>`);
   card.querySelector('.card-title').textContent = ev.title;
   card.querySelector('.card-org').textContent = ev.org;
   card.querySelector('.card-place').textContent = ev.place;
+  if (ev.registrationRequired && ev.registrationUrl) {
+    const registerLink = card.querySelector('.act-register');
+    registerLink.href = ev.registrationUrl;
+    registerLink.hidden = false;
+  }
 
   const spokenCard = `${ev.title}. ${dayName}, ${ev.time}. ${ev.place}. ${t('free')}.`;
   card.querySelector('.act-go').addEventListener('click', function () {
@@ -566,13 +575,29 @@ function askWhen() {
 }
 
 function pickEvents(when) {
-  const inCat = EVENTS.filter(e => e.cat === state.cat);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const inCat = EVENTS.filter(e => {
+    if (e.cat !== state.cat) return false;
+    if (!e.date) return true;
+    const eventDate = new Date(`${e.date}T12:00:00`);
+    const visibleFrom = new Date(eventDate);
+    visibleFrom.setDate(visibleFrom.getDate() - (e.noticeDays || 3));
+    return now >= visibleFrom && eventDate >= now;
+  });
   let list = inCat;
   let intro = t('hereOne');
   if (when === 'today') {
-    const todays = inCat.filter(e => e.day === new Date().getDay());
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const todays = inCat.filter(e => e.date ? e.date === todayIso : e.day === new Date().getDay());
     if (todays.length) list = todays;
     else if (inCat.length) intro = t('noneToday'); /* graceful fallback, never a dead end */
+  }
+  if (when === 'week') {
+    const weekEnd = new Date(now);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    const dated = inCat.filter(e => !e.date || new Date(`${e.date}T12:00:00`) <= weekEnd);
+    if (dated.length) list = dated;
   }
   if (!list.length) { addGuide(t('noneCat')); return askCategory(t('whatNeed')); }
   state.queue = list.slice();
