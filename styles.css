@@ -280,6 +280,10 @@ html, body {
 .card-more summary:hover { background: var(--bg); }
 .card-more summary .ms { font-size: 1.3rem; }
 .card-more-actions { display: grid; gap: 8px; padding-top: 8px; }
+.calendar-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.before-go { padding: 12px 14px; border: 2px solid var(--line); border-radius: 14px; background: var(--bg); }
+.before-go ol { margin: 0; padding-left: 1.4rem; }
+.before-go li { margin: 8px 0; line-height: 1.4; }
 
 /* ---------- Composer ---------- */
 .composer {

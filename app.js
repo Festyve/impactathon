@@ -58,6 +58,9 @@ const S = {
     free: "Free",
     register: "Register", registrationNeeded: "Sign-up needed",
     moreHelp: "More help", addCalendar: "Add to phone calendar", shareHelper: "Share with family or helper",
+    googleCalendar: "Google Calendar", appleCalendar: "Apple or Outlook", beforeGo: "Before you go",
+    planTime: "Check the day and time", planDirections: "Open directions before leaving",
+    planRegister: "Register before you go", planHelper: "Ask someone you trust if you want support",
     calendarSaved: "Calendar event ready. Your device can remind you.",
     helperShared: "Event details are ready to share with someone you trust.",
     justWalkIn: "Just walk in", stepFree: "Step-free", asl: "ASL",
@@ -100,6 +103,9 @@ const S = {
     free: "Gratuit",
     register: "S'inscrire", registrationNeeded: "Inscription requise",
     moreHelp: "Plus d'aide", addCalendar: "Ajouter au calendrier du téléphone", shareHelper: "Partager avec un proche ou un aidant",
+    googleCalendar: "Google Agenda", appleCalendar: "Apple ou Outlook", beforeGo: "Avant de partir",
+    planTime: "Vérifie le jour et l'heure", planDirections: "Ouvre l'itinéraire avant de partir",
+    planRegister: "Inscris-toi avant d'y aller", planHelper: "Demande de l'aide à une personne de confiance si tu veux",
     calendarSaved: "L'événement est prêt pour ton calendrier. Ton appareil peut te le rappeler.",
     helperShared: "Les détails sont prêts à être partagés avec une personne de confiance.",
     justWalkIn: "Entre sans rendez-vous", stepFree: "Sans marches", asl: "ASL",
@@ -142,6 +148,9 @@ const S = {
     free: "Gratis",
     register: "Inscribirme", registrationNeeded: "Inscripción necesaria",
     moreHelp: "Más ayuda", addCalendar: "Añadir al calendario del teléfono", shareHelper: "Compartir con familia o ayudante",
+    googleCalendar: "Google Calendar", appleCalendar: "Apple u Outlook", beforeGo: "Antes de ir",
+    planTime: "Revisa el día y la hora", planDirections: "Abre las indicaciones antes de salir",
+    planRegister: "Inscríbete antes de ir", planHelper: "Pide apoyo a alguien de confianza si quieres",
     calendarSaved: "El evento está listo para tu calendario. Tu dispositivo puede recordártelo.",
     helperShared: "Los detalles están listos para compartir con alguien de confianza.",
     justWalkIn: "Entra sin cita", stepFree: "Sin escalones", asl: "ASL",
@@ -379,8 +388,14 @@ function addCard(ev) {
         <details class="card-more">
           <summary><span class="ms" aria-hidden="true">help</span>${t('moreHelp')}</summary>
           <div class="card-more-actions">
-            <button type="button" class="btn act-calendar"><span class="ms" aria-hidden="true">calendar_add_on</span>${t('addCalendar')}</button>
+            <button type="button" class="btn act-calendar" aria-expanded="false"><span class="ms" aria-hidden="true">calendar_add_on</span>${t('addCalendar')}</button>
+            <div class="calendar-choices" hidden>
+              <a class="btn act-google-calendar" target="_blank" rel="noopener"><span class="ms" aria-hidden="true">calendar_month</span>${t('googleCalendar')}</a>
+              <button type="button" class="btn act-ics-calendar"><span class="ms" aria-hidden="true">event</span>${t('appleCalendar')}</button>
+            </div>
             <button type="button" class="btn act-share"><span class="ms" aria-hidden="true">share</span>${t('shareHelper')}</button>
+            <button type="button" class="btn act-plan" aria-expanded="false"><span class="ms" aria-hidden="true">checklist</span>${t('beforeGo')}</button>
+            <div class="before-go" hidden></div>
           </div>
         </details>
       </div>
@@ -394,11 +409,27 @@ function addCard(ev) {
     registerLink.hidden = false;
   }
 
-  card.querySelector('.act-calendar').addEventListener('click', () => {
-    downloadCalendarEvent(ev);
-    addGuide(t('calendarSaved'));
+  const calendarButton = card.querySelector('.act-calendar');
+  const calendarChoices = card.querySelector('.calendar-choices');
+  card.querySelector('.act-google-calendar').href = googleCalendarUrl(ev);
+  calendarButton.addEventListener('click', () => {
+    calendarChoices.hidden = !calendarChoices.hidden;
+    calendarButton.setAttribute('aria-expanded', String(!calendarChoices.hidden));
   });
+  card.querySelector('.act-ics-calendar').addEventListener('click', () => downloadCalendarEvent(ev));
   card.querySelector('.act-share').addEventListener('click', () => shareWithHelper(ev));
+  const planButton = card.querySelector('.act-plan');
+  const plan = card.querySelector('.before-go');
+  const steps = [t('planTime'), t('planDirections')];
+  if (ev.registrationRequired) steps.push(t('planRegister'));
+  steps.push(t('planHelper'));
+  const list = document.createElement('ol');
+  steps.forEach(step => { const item = document.createElement('li'); item.textContent = step; list.appendChild(item); });
+  plan.appendChild(list);
+  planButton.addEventListener('click', () => {
+    plan.hidden = !plan.hidden;
+    planButton.setAttribute('aria-expanded', String(!plan.hidden));
+  });
 
   const spokenCard = `${ev.title}. ${dayName}, ${ev.time}. ${ev.place}. ${t('free')}.`;
   card.querySelector('.act-go').addEventListener('click', function () {
@@ -444,6 +475,18 @@ function icsText(value) {
   return String(value).replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
 }
 
+function googleCalendarUrl(ev) {
+  const start = eventStart(ev);
+  const end = new Date(start.getTime() + 90 * 60 * 1000);
+  const params = new URLSearchParams({
+    action:'TEMPLATE', text:ev.title,
+    dates:`${calendarStamp(start)}/${calendarStamp(end)}`,
+    details:`${ev.org}. ${t('free')}.${ev.registrationRequired ? ` ${t('registrationNeeded')}.` : ''}`,
+    location:ev.place
+  });
+  return `https://calendar.google.com/calendar/render?${params}`;
+}
+
 function downloadCalendarEvent(ev) {
   const start = eventStart(ev);
   const end = new Date(start.getTime() + 90 * 60 * 1000);
@@ -465,6 +508,7 @@ function downloadCalendarEvent(ev) {
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  addGuide(t('calendarSaved'));
 }
 
 async function shareWithHelper(ev) {

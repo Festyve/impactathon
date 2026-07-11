@@ -59,7 +59,7 @@ This app is built on methods disability services already use every day. It's not
 - The organization posting form, feeding the same event pool (localStorage as the stand-in database), with a free map picker, a default 3-day notice window, and optional registration details
 - All accessibility modes above, working
 - "I'll go" analytics seed (a tap counter — the spec's engagement nice-to-have)
-- A collapsed “More help” area on every event card with a free device-calendar download and native sharing to a family member, friend, or support worker
+- A collapsed “More help” area on every event card with direct Google Calendar or Apple/Outlook choices, native sharing to a family member/helper, and a plain-language “Before you go” checklist
 
 **Next (in rough order):**
 1. **Real shared backend** — swap localStorage for a small hosted DB (e.g. Supabase/Postgres: `events` + `orgs` tables; the front end already treats events as one JSON array, so this is a thin swap). Add org accounts + per-org permissions, edit/remove, scheduled postings, auto-archiving of past events (all straightforward once a DB exists).

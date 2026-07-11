@@ -40,7 +40,7 @@ The incentive is reach without duplicate composition: one short, accessible list
 - Optional registration URL and capacity, hidden in a collapsed section unless needed.
 - Read aloud and replay, speech input where supported, high contrast, three text sizes, keyboard operation, screen-reader live region, reduced-motion support, and English/French/Spanish interface text.
 - Local “I’ll go” counter as a privacy-conscious analytics seed.
-- Zero-backend support tools hidden behind one “More help” control: download a standard `.ics` calendar event with a device reminder, or share the plain-language event details with a trusted helper.
+- Zero-backend support tools hidden behind one “More help” control: open a prefilled Google Calendar event or download an Apple/Outlook `.ics` file with a device reminder; share plain-language details with a trusted helper; or open a generated “Before you go” checklist.
 - KW Hab’s existing public calendar is embedded from Teamup. To eliminate duplicate nonprofit entry in production, a KW Hab Teamup administrator should generate a read-only “All calendars” iCalendar feed and configure Belong to import it. The public page URL is not a feed and should not be scraped.
 
 ## What is not built
