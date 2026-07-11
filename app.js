@@ -29,7 +29,7 @@ const state = {
 /* ---------- strings (English, French, Spanish) ---------- */
 const S = {
   en: {
-    greeting: "Hi, I'm Robin. Tap one picture. I'll show you something nearby.",
+    greeting: "Hi, I'm Belong. Tap one picture. I'll show you something nearby.",
     firstThen: "First: tap a picture. Then: I show you what's on.",
     whatNeed: "What do you need today?",
     whenGo: "When do you want to go?",
@@ -87,7 +87,7 @@ const S = {
     notifNow: "now",
   },
   fr: {
-    greeting: "Bonjour, je m'appelle Robin. Touche une image. Je te montrerai quelque chose près de chez toi.",
+    greeting: "Bonjour, je m'appelle Belong. Touche une image. Je te montrerai quelque chose près de chez toi.",
     firstThen: "D'abord : touche une image. Ensuite : je te montre ce qu'il y a.",
     whatNeed: "De quoi as-tu besoin aujourd'hui ?",
     whenGo: "Quand veux-tu y aller ?",
@@ -145,7 +145,7 @@ const S = {
     notifNow: "maintenant",
   },
   es: {
-    greeting: "Hola, soy Robin. Toca una imagen. Te mostraré algo cerca de ti.",
+    greeting: "Hola, soy Belong. Toca una imagen. Te mostraré algo cerca de ti.",
     firstThen: "Primero: toca una imagen. Después: te muestro qué hay.",
     whatNeed: "¿Qué necesitas hoy?",
     whenGo: "¿Cuándo quieres ir?",
