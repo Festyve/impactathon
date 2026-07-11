@@ -72,6 +72,19 @@ const S = {
     age: { child:"Under 12", teen:"13 to 17", adult:"18 to 64", senior:"65 and up" },
     accessTitle: "Any accessibility needs?", accessSub: "Pick as many as you like. This is just for you.",
     access: { lowvision:"Low vision or blind", deaf:"Deaf or hard of hearing", mobility:"Physical or mobility needs", intellectual:"Intellectual or learning disability", sensory:"Autism or sensory sensitivity", none:"None of these" },
+    tabFind: "Find things",
+    tabBooked: "My bookings",
+    bookedTitle: "Your booked activities",
+    bookedHelp: "Tap a booking to select it. Then tap the big red button to cancel it.",
+    bookedEmpty: "No bookings yet.",
+    bookedEmptyHint: "When you tap \"I'll go\" on an activity, it will show up here.",
+    selectWord: "Select", selectedWord: "Selected",
+    cancelBtn: "Cancel selected bookings",
+    selectFirst: "First tap a booking above, then tap the red button.",
+    confirmQ: "Are you sure you want to cancel?",
+    confirmYes: "Yes, cancel", confirmNo: "No, keep",
+    cancelledMsg: "Done — cancelled. You can book it again any time.",
+    bookedAdded: "Saved to My bookings. You can see or cancel it in the My bookings tab.",
   },
   fr: {
     greeting: "Bonjour, je m'appelle Robin. Touche une image. Je te montrerai quelque chose près de chez toi.",
@@ -117,6 +130,19 @@ const S = {
     age: { child:"Moins de 12 ans", teen:"13 à 17 ans", adult:"18 à 64 ans", senior:"65 ans et plus" },
     accessTitle: "As-tu des besoins d'accessibilité ?", accessSub: "Choisis-en autant que tu veux. C'est juste pour toi.",
     access: { lowvision:"Basse vision ou aveugle", deaf:"Sourd ou malentendant", mobility:"Besoins physiques ou de mobilité", intellectual:"Déficience intellectuelle ou trouble d'apprentissage", sensory:"Autisme ou sensibilité sensorielle", none:"Aucun de ces besoins" },
+    tabFind: "Trouver",
+    tabBooked: "Mes réservations",
+    bookedTitle: "Tes activités réservées",
+    bookedHelp: "Touche une réservation pour la choisir. Ensuite, touche le grand bouton rouge pour l'annuler.",
+    bookedEmpty: "Aucune réservation pour l'instant.",
+    bookedEmptyHint: "Quand tu touches « J'y vais », l'activité apparaît ici.",
+    selectWord: "Choisir", selectedWord: "Choisie",
+    cancelBtn: "Annuler les réservations choisies",
+    selectFirst: "Touche d'abord une réservation, puis le bouton rouge.",
+    confirmQ: "Es-tu sûr de vouloir annuler ?",
+    confirmYes: "Oui, annuler", confirmNo: "Non, garder",
+    cancelledMsg: "C'est fait — annulé. Tu peux réserver à nouveau quand tu veux.",
+    bookedAdded: "Ajouté à Mes réservations. Tu peux la voir ou l'annuler dans l'onglet Mes réservations.",
   },
   es: {
     greeting: "Hola, soy Robin. Toca una imagen. Te mostraré algo cerca de ti.",
@@ -162,6 +188,19 @@ const S = {
     age: { child:"Menos de 12", teen:"13 a 17", adult:"18 a 64", senior:"65 o más" },
     accessTitle: "¿Tienes alguna necesidad de accesibilidad?", accessSub: "Elige tantas como quieras. Esto es solo para ti.",
     access: { lowvision:"Baja visión o ciego", deaf:"Sordo o con dificultad auditiva", mobility:"Necesidades físicas o de movilidad", intellectual:"Discapacidad intelectual o de aprendizaje", sensory:"Autismo o sensibilidad sensorial", none:"Ninguna de estas" },
+    tabFind: "Buscar",
+    tabBooked: "Mis reservas",
+    bookedTitle: "Tus actividades reservadas",
+    bookedHelp: "Toca una reserva para elegirla. Después toca el botón rojo grande para cancelarla.",
+    bookedEmpty: "Todavía no tienes reservas.",
+    bookedEmptyHint: "Cuando toques «Voy a ir», la actividad aparecerá aquí.",
+    selectWord: "Elegir", selectedWord: "Elegida",
+    cancelBtn: "Cancelar las reservas elegidas",
+    selectFirst: "Primero toca una reserva, después el botón rojo.",
+    confirmQ: "¿Seguro que quieres cancelar?",
+    confirmYes: "Sí, cancelar", confirmNo: "No, conservar",
+    cancelledMsg: "Listo — cancelado. Puedes reservar otra vez cuando quieras.",
+    bookedAdded: "Guardado en Mis reservas. Puedes verla o cancelarla en la pestaña Mis reservas.",
   },
 };
 const t = key => S[state.lang][key];
@@ -437,8 +476,10 @@ function addCard(ev) {
     /* analytics seed: count "I'll go" taps (the spec's nice-to-have) */
     const n = +(localStorage.getItem('belong-going') || 0) + 1;
     localStorage.setItem('belong-going', n);
+    addBooking(ev);
     addUser(t('go'));
     addGuide(t('great'));
+    addGuide(t('bookedAdded'));
     askReminder(ev);
   });
   chat.appendChild(card);
@@ -824,6 +865,10 @@ function applySettings() {
   $('#btnContrast').setAttribute('aria-pressed', String(state.contrast));
   $('#btnSound').setAttribute('aria-pressed', String(state.sound));
   $('#langLabel').textContent = { en:'English', fr:'Français', es:'Español' }[state.lang];
+  $('#tabFindLabel').textContent = t('tabFind');
+  $('#tabBookedLabel').textContent = t('tabBooked');
+  updateBookedBadge();
+  if (!$('#panelBooked').hidden) renderBooked(); /* re-label in the new language */
 }
 
 $('#btnText').addEventListener('click', () => {
@@ -856,9 +901,185 @@ function restart() {
   stopSpeech();
   chat.innerHTML = '';
   state.cat = null; state.queue = []; state.shown = 0;
+  switchTab(0);
   greet();
 }
 $('#startOver').addEventListener('click', restart);
+
+/* ============================================================
+   Tabs + booked appointments
+   Same ground rules as the rest of the app: big targets, colour
+   never alone, every action announced, and no dead ends — the red
+   button explains itself instead of silently doing nothing.
+   ============================================================ */
+
+/* ---------- tabs (WAI-ARIA pattern: roving tabindex, arrows move) ---------- */
+const TABS = [
+  { btn: $('#tabFind'),   panel: $('#panelFind') },
+  { btn: $('#tabBooked'), panel: $('#panelBooked') },
+];
+let activeTab = 0;
+
+function switchTab(i, { focus } = {}) {
+  activeTab = i;
+  TABS.forEach((tab, j) => {
+    const on = i === j;
+    tab.btn.setAttribute('aria-selected', String(on));
+    tab.btn.tabIndex = on ? 0 : -1;
+    tab.panel.hidden = !on;
+  });
+  $('#composer')?.toggleAttribute('hidden', i !== 0); /* typing to Robin only applies while finding */
+  if (i === 1) renderBooked();
+  if (focus) TABS[i].btn.focus();
+  if (state.sound) speak(i === 1 ? t('bookedTitle') : t('tabFind'));
+}
+
+TABS.forEach((tab, i) => tab.btn.addEventListener('click', () => switchTab(i)));
+
+$('.tabs').addEventListener('keydown', e => {
+  const jump = { Home: 0, End: TABS.length - 1 };
+  const step = { ArrowLeft: -1, ArrowRight: 1 };
+  if (e.key in step) {
+    e.preventDefault();
+    switchTab((activeTab + step[e.key] + TABS.length) % TABS.length, { focus: true });
+  } else if (e.key in jump) {
+    e.preventDefault();
+    switchTab(jump[e.key], { focus: true });
+  }
+});
+
+/* ---------- booked storage ---------- */
+const loadBooked = () => JSON.parse(localStorage.getItem('belong-booked') || '[]');
+const saveBookedList = list => localStorage.setItem('belong-booked', JSON.stringify(list));
+const selectedIds = new Set();
+
+function addBooking(ev) {
+  const list = loadBooked();
+  if (list.some(b => b.title === ev.title && b.day === ev.day && b.time === ev.time)) return;
+  list.push({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    title: ev.title, org: ev.org, day: ev.day, time: ev.time,
+    place: ev.place, cat: ev.cat, pict: ev.pict,
+  });
+  saveBookedList(list);
+  updateBookedBadge();
+}
+
+/* Count on the tab, and in its spoken name for screen readers. */
+function updateBookedBadge() {
+  const n = loadBooked().length;
+  const badge = $('#bookedBadge');
+  badge.hidden = !n;
+  badge.textContent = n;
+  $('#tabBooked').setAttribute('aria-label', t('tabBooked') + (n ? `, ${n}` : ''));
+}
+
+/* role="status" region: screen readers announce this without moving focus. */
+function setBookedStatus(msg) {
+  $('#bookedStatus').textContent = msg;
+  if (state.sound && msg) speak(msg);
+}
+
+const hideConfirm = () => { $('#confirmBox').hidden = true; };
+
+function syncCancelBtn() {
+  const n = selectedIds.size;
+  $('#btnCancelLabel').textContent = n ? `${t('cancelBtn')} (${n})` : t('cancelBtn');
+  /* aria-disabled, not disabled: stays reachable, and tapping it explains
+     the next step instead of doing nothing (COGA: no dead ends). */
+  $('#btnCancel').setAttribute('aria-disabled', String(!n));
+}
+
+function renderBooked() {
+  const list = loadBooked();
+  selectedIds.forEach(id => { if (!list.some(b => b.id === id)) selectedIds.delete(id); });
+
+  $('#bookedTitle').textContent = t('bookedTitle');
+  $('#bookedHelp').textContent = t('bookedHelp');
+  $('#bookedHelp').hidden = !list.length;
+  $('#bookedEmptyText').textContent = t('bookedEmpty');
+  $('#bookedEmptyHint').textContent = t('bookedEmptyHint');
+  $('#bookedEmpty').hidden = !!list.length;
+  $('#btnCancel').hidden = !list.length;
+  hideConfirm();
+
+  const ul = $('#bookedList');
+  ul.innerHTML = '';
+  list.forEach(b => {
+    /* Selectable card: a real button with role="checkbox", so Enter and
+       Space both work and the checked state is spoken. Selection is shown
+       three ways — accent border, filled check, and the word itself. */
+    const li = el(`
+      <li class="booked-item">
+        <button type="button" class="booked-card c-${b.cat}" role="checkbox" aria-checked="false">
+          <span class="dot"><img src="${pict(b.pict)}" alt=""></span>
+          <span class="booked-info">
+            <span class="booked-name"></span>
+            <span class="booked-org"></span>
+            <span class="booked-meta"><img src="${pict('clock')}" alt="">${DAY_NAMES[state.lang][b.day]}, ${b.time}</span>
+            <span class="booked-meta"><img src="${pict('place')}" alt=""><span class="booked-place"></span></span>
+          </span>
+          <span class="booked-check"><span class="ms" aria-hidden="true">check</span><span class="booked-check-word"></span></span>
+        </button>
+      </li>`);
+    li.querySelector('.booked-name').textContent = b.title;
+    li.querySelector('.booked-org').textContent = b.org;
+    li.querySelector('.booked-place').textContent = b.place;
+    const btn = li.querySelector('.booked-card');
+    const word = li.querySelector('.booked-check-word');
+    const sync = () => {
+      const on = selectedIds.has(b.id);
+      btn.setAttribute('aria-checked', String(on));
+      word.textContent = on ? t('selectedWord') : t('selectWord');
+    };
+    sync();
+    btn.addEventListener('click', () => {
+      selectedIds.has(b.id) ? selectedIds.delete(b.id) : selectedIds.add(b.id);
+      sync();
+      syncCancelBtn();
+      hideConfirm();
+      setBookedStatus('');
+      if (state.sound) speak(`${b.title}. ${selectedIds.has(b.id) ? t('selectedWord') : t('selectWord')}`);
+    });
+    ul.appendChild(li);
+  });
+
+  syncCancelBtn();
+  updateBookedBadge();
+}
+
+/* Big red button → confirm step → cancel. Never destroys on first tap. */
+$('#btnCancel').addEventListener('click', () => {
+  if (!selectedIds.size) return setBookedStatus(t('selectFirst'));
+  setBookedStatus('');
+  $('#confirmText').textContent = t('confirmQ');
+  $('#confirmYesLabel').textContent = t('confirmYes');
+  $('#confirmNoLabel').textContent = t('confirmNo');
+  const box = $('#confirmBox');
+  box.hidden = false;
+  box.focus(); /* the reader lands on the question, not past it */
+  if (state.sound) speak(t('confirmQ'));
+});
+
+$('#btnConfirmYes').addEventListener('click', () => {
+  const all = loadBooked();
+  const gone = all.filter(b => selectedIds.has(b.id));
+  saveBookedList(all.filter(b => !selectedIds.has(b.id)));
+  /* a cancelled booking shouldn't still fire its reminder */
+  const reminders = JSON.parse(localStorage.getItem('belong-reminders') || '[]')
+    .filter(r => !gone.some(b => b.title === r.title && b.day === r.day && b.time === r.time));
+  localStorage.setItem('belong-reminders', JSON.stringify(reminders));
+  selectedIds.clear();
+  renderBooked();
+  setBookedStatus(t('cancelledMsg'));
+  $('#bookedTitle').focus(); /* confirm box is gone; land somewhere real */
+});
+
+$('#btnConfirmNo').addEventListener('click', () => {
+  hideConfirm();
+  setBookedStatus('');
+  $('#btnCancel').focus();
+});
 
 /* ---------- go ---------- */
 applySettings();
