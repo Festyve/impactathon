@@ -176,21 +176,20 @@ const CATS = [
   { key:'money',  pict:'money',  cls:'c-money' },
 ];
 
-/* ---------- demo events (would come from the shared platform + org form) ---------- */
+/* ---------- demo events (would come from the shared platform + org form) ----------
+   Each event can carry targeting: `city` (or 'any'), `ages` (age-group keys;
+   empty = every age), and `needs` (accessibility-need keys; empty = everyone).
+   The two seeds are aimed at two different member profiles on purpose:
+   1. Waterloo · Money help · any age · intellectual/learning disability
+   2. Kitchener · Food · 18 to 64 · any disability */
 const BUILTIN_EVENTS = [
-  { cat:'food',   pict:'food',    title:'Community hot lunch',        org:"St. John's Kitchen",              day:2, time:'12:00 pm', place:'97 Victoria St N, Kitchener',  access:['stepFree','justWalkIn'] },
-  { cat:'food',   pict:'food',    title:'Free grocery pick-up',       org:'Food Bank of Waterloo Region',    day:4, time:'10:00 am', place:'50 Alpine Ct, Kitchener',      access:['stepFree'] },
-  { cat:'people', pict:'people',  title:'Coffee & board games',       org:'KW Habilitation',                 day:3, time:'6:30 pm',  place:'99 Ottawa St S, Kitchener',    access:['stepFree','justWalkIn','asl'] },
-  { cat:'people', pict:'music',   title:'Community music night',      org:'Extend-A-Family',                 day:5, time:'7:00 pm',  place:'91 Moore Ave, Kitchener',      access:['stepFree'] },
-  { cat:'kids',   pict:'sport',   title:'Free family swim',           org:'City of Kitchener',               day:6, time:'1:00 pm',  place:'Forest Heights Pool',          access:['stepFree','justWalkIn'] },
-  { cat:'kids',   pict:'library', title:'Story time for kids',        org:'Kitchener Public Library',        day:6, time:'10:30 am', place:'85 Queen St N, Kitchener',     access:['stepFree','justWalkIn','asl'] },
-  { cat:'health', pict:'health',  title:'Free dental check day',      org:'Community Healthcaring KW',       day:1, time:'9:00 am',  place:'44 Francis St S, Kitchener',   access:['stepFree'] },
-  { cat:'health', pict:'sport',   title:'Gentle walking group',       org:'Sunnyside Wellness',              day:2, time:'10:00 am', place:'Victoria Park clock tower',    access:['justWalkIn'] },
-  { cat:'learn',  pict:'learn',   title:'English conversation circle',org:'KW Multicultural Centre',         day:3, time:'5:30 pm',  place:'102 King St W, Kitchener',     access:['stepFree','justWalkIn'] },
-  { cat:'learn',  pict:'library', title:'Free computer help',         org:'Kitchener Public Library',        day:5, time:'2:00 pm',  place:'85 Queen St N, Kitchener',     access:['stepFree','justWalkIn'] },
-  { cat:'money',  pict:'money',   title:'Free tax clinic',            org:'The Working Centre',              day:4, time:'1:00 pm',  place:'58 Queen St S, Kitchener',     access:['stepFree'] },
+  { cat:'money', pict:'money', title:'Money help drop-in',   org:'KW Habilitation',    day:4, time:'1:00 pm',  place:'20 Erb St W, Waterloo',
+    access:['stepFree','justWalkIn'], city:'waterloo',  ages:[],        needs:['intellectual'] },
+  { cat:'food',  pict:'food',  title:'Community hot lunch',  org:"St. John's Kitchen", day:2, time:'12:00 pm', place:'97 Victoria St N, Kitchener',
+    access:['stepFree','justWalkIn'], city:'kitchener', ages:['adult'], needs:[] },
 ];
-const allEvents = () => BUILTIN_EVENTS.concat(JSON.parse(localStorage.getItem('belong-events') || '[]'));
+const postedEvents = () => JSON.parse(localStorage.getItem('belong-events') || '[]');
+const allEvents = () => BUILTIN_EVENTS.concat(postedEvents());
 
 const DAY_NAMES = {
   en:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
@@ -614,6 +613,7 @@ function finishOnboarding() {
   }
   renderFeed();
   checkForNewEvents();
+  checkNotifs();
 }
 function startOnboarding() {
   /* Pre-fill with saved answers so redoing setup is an edit, not a reset. */
@@ -663,19 +663,32 @@ function isVisibleNow(ev) {
 
 const isPast = ev => ev.date ? new Date(`${ev.date}T23:59:59`) < new Date() : false;
 
-/* "Relevant" = matches the onboarding answers. Filters are deliberately
-   gentle — when in doubt, deliver the message (never silently starve). */
+/* "Relevant" = the event's targeting matches the onboarding answers.
+   An event field left empty targets everyone; a user answer left blank
+   (skipped setup) never blocks a message — except audience-specific
+   events (`needs`), which only go to the people they're for. */
 function isRelevant(ev) {
   const prefs = JSON.parse(localStorage.getItem('belong-prefs') || '{}');
+  /* Type of activity: the user must have picked this interest (if any). */
   if (prefs.interests?.length && !prefs.interests.includes(ev.cat)) return false;
+  /* City: an event aimed at one city only goes to members there. */
+  if (ev.city && ev.city !== 'any') {
+    if (prefs.location && prefs.location !== 'notsure' && prefs.location !== ev.city) return false;
+  } else if (!ev.city) {
+    /* Older events without an explicit city: read it off the address, and
+       only skip one clearly in a *different* city than the user's. */
+    const cities = ['kitchener', 'waterloo', 'cambridge'];
+    if (cities.includes(prefs.location)) {
+      const place = (ev.place || '').toLowerCase();
+      if (!place.includes(prefs.location) && cities.some(c => c !== prefs.location && place.includes(c))) return false;
+    }
+  }
+  /* Age: an event for specific age groups only goes to those groups. */
+  if (ev.ages?.length && prefs.age && !ev.ages.includes(prefs.age)) return false;
+  /* Audience: an event for specific accessibility groups only goes to them. */
+  if (ev.needs?.length && !ev.needs.some(n => (prefs.access || []).includes(n))) return false;
   /* A venue with steps isn't a real invitation for someone who can't enter. */
   if (prefs.access?.includes('mobility') && !(ev.access || []).includes('stepFree')) return false;
-  /* Only skip an event clearly in a *different* city than the user's. */
-  const cities = ['kitchener', 'waterloo', 'cambridge'];
-  if (cities.includes(prefs.location)) {
-    const place = (ev.place || '').toLowerCase();
-    if (!place.includes(prefs.location) && cities.some(c => c !== prefs.location && place.includes(c))) return false;
-  }
   return true;
 }
 
@@ -726,9 +739,12 @@ function checkForNewEvents() {
 }
 
 setInterval(checkForNewEvents, 5000);
-/* `storage` fires in this tab when post.html saves in another one. */
+/* `storage` fires in this tab when post.html saves in another one:
+   the message lands in the feed and the phone-style banner drops in. */
 window.addEventListener('storage', e => {
-  if (e.key === 'belong-events') checkForNewEvents();
+  if (e.key !== 'belong-events') return;
+  checkForNewEvents();
+  checkNotifs();
 });
 
 /* ---------- reminder ask (after booking from a message) ---------- */
@@ -1033,22 +1049,16 @@ $('#btnConfirmNo').addEventListener('click', () => {
 const notifSeen = () => JSON.parse(localStorage.getItem('belong-notified') || '[]');
 let notifCurrent = null;
 
+/* A banner is due for a posted event once its notice window opens — but
+   only if Robin would actually message this member about it. */
 function notifDue() {
   const seen = notifSeen();
-  const now = new Date();
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  return postedEvents().filter(e => {
-    if (!e.id || seen.includes(e.id)) return false;
-    if (!e.date) return true;
-    const eventDate = new Date(`${e.date}T12:00:00`);
-    if (eventDate < today) return false;
-    const visibleFrom = e.notifyAt ? new Date(e.notifyAt) : new Date(eventDate);
-    if (!e.notifyAt) visibleFrom.setDate(visibleFrom.getDate() - (e.noticeDays || 3));
-    return now >= visibleFrom;
-  });
+  return postedEvents().filter(e =>
+    e.id && !seen.includes(e.id) && isVisibleNow(e) && isRelevant(e));
 }
 
 function checkNotifs() {
+  if (!localStorage.getItem('belong-onboarded')) return; /* not during setup */
   if (notifCurrent) return; /* one banner at a time */
   const due = notifDue();
   if (!due.length) return;
@@ -1064,6 +1074,7 @@ function checkNotifs() {
 }
 
 function closeNotif() {
+  if (!notifCurrent) return;
   const seen = notifSeen();
   if (!seen.includes(notifCurrent.id)) seen.push(notifCurrent.id);
   localStorage.setItem('belong-notified', JSON.stringify(seen));
@@ -1077,22 +1088,14 @@ function closeNotif() {
   }, 260);
 }
 
-/* Tapping the notification opens the event in the chat, then it fades away. */
+/* Tapping the notification jumps to the event's message in the feed. */
 $('#notifCard').addEventListener('click', () => {
-  const ev = notifCurrent;
   closeNotif();
-  switchTab(0);
-  state.queue = [ev];
-  state.shown = 0;
-  addGuide(t('hereOne'));
-  showNext();
+  switchTab(0, { quiet: true });
+  checkForNewEvents(); /* make sure its message has landed */
+  scroll();            /* the newest message sits at the bottom */
 });
 
-window.addEventListener('storage', e => {
-  if (e.key !== 'belong-events') return;
-  EVENTS = BUILTIN_EVENTS.concat(postedEvents()); /* new posts join discovery without a refresh */
-  checkNotifs();
-});
 setInterval(checkNotifs, 30000); /* a notice time can arrive while the page is open */
 
 /* ---------- go ---------- */
@@ -1100,6 +1103,7 @@ applySettings();
 if (localStorage.getItem('belong-onboarded')) {
   renderFeed();
   checkForNewEvents();
+  checkNotifs(); /* something may have been posted while the app was closed */
 } else {
   startOnboarding();
 }
