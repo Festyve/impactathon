@@ -19,7 +19,7 @@
     .field { display: flex; flex-direction: column; gap: 8px; }
     .field > label, .field > .field-label { font-weight: 700; font-size: 1rem; }
     .field input[type="text"], .field input[type="time"], .field input[type="date"],
-    .field input[type="url"], .field input[type="number"], .field select {
+    .field input[type="url"], .field input[type="number"], .field input[type="datetime-local"], .field select {
       min-height: var(--target); border: 2px solid var(--line); border-radius: 14px;
       padding: 0 16px; font-family: var(--font); font-size: 1rem;
       background: var(--app); color: var(--ink); width: 100%;
@@ -60,17 +60,8 @@
     #locationMap { height: 300px; border: 2px solid var(--line); border-radius: 14px; z-index: 1; }
     .map-status { margin: 8px 2px 0; color: var(--ink-soft); font-size: .85rem; line-height: 1.4; }
     .leaflet-control-attribution { font-size: 10px; }
-    .notice-grid { display: grid; gap: 8px; }
-    .notice-pick { position: relative; }
-    .notice-pick input { position: absolute; opacity: 0; }
-    .notice-pick span {
-      display: block; min-height: var(--target); padding: 11px 14px;
-      border: 2px solid var(--line); border-radius: 14px; cursor: pointer;
-      font-weight: 700; line-height: 1.35;
-    }
-    .notice-pick small { display: block; color: var(--ink-soft); font-weight: 400; margin-top: 2px; }
-    .notice-pick input:checked + span { border-color: var(--accent); background: var(--kids-bg); }
-    .notice-pick input:focus-visible + span { outline: 4px solid var(--focus); outline-offset: 2px; }
+    .custom-notice { padding: 10px 12px; border-left: 4px solid var(--accent); background: var(--bg); border-radius: 10px; }
+    .field[hidden], .custom-notice[hidden] { display: none; }
     .optional {
       margin: 0 0 18px; border: 2px solid var(--line); border-radius: 14px;
       padding: 0 14px; background: var(--app);
@@ -128,23 +119,20 @@
           <input id="fDate" type="date" required />
         </div>
 
-        <fieldset class="field" style="margin:0 0 18px; border:none; padding:0">
-          <legend class="field-label" style="margin-bottom:8px">When should members hear about it?</legend>
-          <div class="notice-grid">
-            <label class="notice-pick">
-              <input type="radio" name="notice" value="1" />
-              <span>1 day before<small>Casual or drop-in event</small></span>
-            </label>
-            <label class="notice-pick">
-              <input type="radio" name="notice" value="3" checked />
-              <span>3 days before<small>Best for most events</small></span>
-            </label>
-            <label class="notice-pick">
-              <input type="radio" name="notice" value="7" />
-              <span>1 week before<small>Use when you need numbers or sign-up</small></span>
-            </label>
+        <div class="field" style="margin-bottom:18px">
+          <label for="fNotice">When should members hear about it?</label>
+          <select id="fNotice">
+            <option value="1">1 day before — casual or drop-in</option>
+            <option value="3" selected>3 days before — best for most events</option>
+            <option value="7">1 week before — when you need numbers</option>
+            <option value="custom">Choose a custom date and time…</option>
+          </select>
+          <div class="field custom-notice" id="customNoticeField" hidden>
+            <label for="fNotifyAt">Custom notification date and time</label>
+            <input id="fNotifyAt" type="datetime-local" />
+            <p class="map-help">Choose exactly when this opportunity should start appearing to members.</p>
           </div>
-        </fieldset>
+        </div>
 
         <div class="field" style="margin-bottom:18px">
           <label for="fTime">What time?</label>
@@ -249,11 +237,32 @@
     const registrationToggle = document.getElementById('aRegistration');
     const registrationFields = document.getElementById('registrationFields');
     const registrationUrl = document.getElementById('fRegisterUrl');
+    const noticeSelect = document.getElementById('fNotice');
+    const customNoticeField = document.getElementById('customNoticeField');
+    const notifyAtInput = document.getElementById('fNotifyAt');
+
+    function localDateTimeValue(date) {
+      const pad = number => String(number).padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function updateNoticeControl() {
+      const custom = noticeSelect.value === 'custom';
+      customNoticeField.hidden = !custom;
+      notifyAtInput.required = custom;
+      notifyAtInput.min = localDateTimeValue(new Date());
+      notifyAtInput.max = `${dateInput.value}T${document.getElementById('fTime').value}`;
+    }
+
+    noticeSelect.addEventListener('change', updateNoticeControl);
+    dateInput.addEventListener('change', updateNoticeControl);
+    document.getElementById('fTime').addEventListener('change', updateNoticeControl);
     registrationToggle.addEventListener('change', () => {
       registrationFields.hidden = !registrationToggle.checked;
       registrationUrl.required = registrationToggle.checked;
       if (registrationToggle.checked) {
-        document.querySelector('input[name="notice"][value="7"]').checked = true;
+        noticeSelect.value = '7';
+        updateNoticeControl();
       }
     });
 
@@ -366,7 +375,8 @@
         day: new Date(`${document.getElementById('fDate').value}T12:00:00`).getDay(),
         time: niceTime(document.getElementById('fTime').value),
         place: document.getElementById('fPlace').value.trim(),
-        noticeDays: +document.querySelector('input[name="notice"]:checked').value,
+        noticeDays: noticeSelect.value === 'custom' ? null : +noticeSelect.value,
+        notifyAt: noticeSelect.value === 'custom' ? notifyAtInput.value : '',
         registrationRequired: registrationToggle.checked,
         registrationUrl: registrationToggle.checked ? registrationUrl.value.trim() : '',
         capacity: registrationToggle.checked ? +(document.getElementById('fCapacity').value || 0) : 0,
@@ -376,19 +386,21 @@
       list.push(ev);
       localStorage.setItem('belong-events', JSON.stringify(list));
       localStorage.setItem('belong-last-org', ev.org);
-      const shareDate = new Date(`${ev.date}T12:00:00`);
-      shareDate.setDate(shareDate.getDate() - ev.noticeDays);
+      const shareDate = ev.notifyAt ? new Date(ev.notifyAt) : new Date(`${ev.date}T${document.getElementById('fTime').value}`);
+      if (!ev.notifyAt) shareDate.setDate(shareDate.getDate() - ev.noticeDays);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       document.getElementById('doneMessage').textContent = shareDate <= today
         ? 'Posted. Members can see it now. '
-        : `Posted. Members should start seeing it ${shareDate.toLocaleDateString('en-CA', { month:'long', day:'numeric' })}. `;
+        : `Posted. Members should start seeing it ${shareDate.toLocaleString('en-CA', { month:'long', day:'numeric', hour:'numeric', minute:'2-digit' })}. `;
       document.getElementById('doneNote').style.display = 'block';
       document.getElementById('doneNote').scrollIntoView({ block: 'nearest' });
       e.target.reset();
       document.getElementById('fOrg').value = ev.org;
       dateInput.value = tomorrow.toISOString().slice(0, 10);
-      document.querySelector('input[name="notice"][value="3"]').checked = true;
+      noticeSelect.value = '3';
+      notifyAtInput.value = '';
+      updateNoticeControl();
       registrationFields.hidden = true;
       registrationUrl.required = false;
       locationResults.classList.remove('show');

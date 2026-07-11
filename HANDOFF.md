@@ -36,7 +36,7 @@ The incentive is reach without duplicate composition: one short, accessible list
 - Need/category -> time -> Easy Read card -> “I’ll go” -> reminder conversation.
 - Eleven seeded Kitchener-Waterloo opportunities.
 - Organization posting form in `post.html`; posted items join discovery on the same browser. Organization name is remembered, the date defaults to tomorrow, location uses a free OpenStreetMap picker, and most events need no optional fields.
-- Organizer-selected notice timing: 1 day for casual/drop-in events, 3 days by default, or 7 days when attendance numbers or registration are needed. The prototype uses that window to decide when a posted event appears in discovery.
+- Organizer-selected notice timing in one compact control: 1 day for casual/drop-in events, 3 days by default, 7 days when attendance numbers are needed, or an exact custom date and time. The prototype uses that choice to decide when a posted event appears in discovery.
 - Optional registration URL and capacity, hidden in a collapsed section unless needed.
 - Read aloud and replay, speech input where supported, high contrast, three text sizes, keyboard operation, screen-reader live region, reduced-motion support, and English/French/Spanish interface text.
 - Local “I’ll go” counter as a privacy-conscious analytics seed.
@@ -63,7 +63,7 @@ The incentive is reach without duplicate composition: one short, accessible list
 
 1. Test the two core flows with people with intellectual disabilities, low literacy, and low vision, plus nonprofit staff. Observe completion, confusion, abandonment, and preferred wording; do not treat framework-based design as a substitute for co-design.
 2. Add a small shared backend with `organizations`, `opportunities`, and aggregate `engagement` data. Add organization accounts, ownership permissions, edit/delete, moderation, and automatic expiry.
-   Run one simple scheduled job each day: select opportunities whose event date minus `noticeDays` is today, then hand those records to the chosen delivery channel. This keeps timing deterministic and does not require AI.
+   Run one simple scheduled job: select opportunities whose calculated notice time (`notifyAt`, or event date minus `noticeDays`) has arrived, then hand those records to the chosen delivery channel. This keeps timing deterministic and does not require AI.
 3. Preserve the current front-end event object as the API contract. Replace the `BUILTIN_EVENTS + localStorage` source in `app.js` with one API request and post the same form shape from `post.html`.
 4. Add one conversational question at a time for neighbourhood, age group, cost, and organization. Test whether each added step improves matches enough to justify the extra effort.
 5. Add registration links and distinguish events from ongoing services. Then prototype calendar import so organizations do not have to enter the same listing twice.

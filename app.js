@@ -581,8 +581,8 @@ function pickEvents(when) {
     if (e.cat !== state.cat) return false;
     if (!e.date) return true;
     const eventDate = new Date(`${e.date}T12:00:00`);
-    const visibleFrom = new Date(eventDate);
-    visibleFrom.setDate(visibleFrom.getDate() - (e.noticeDays || 3));
+    const visibleFrom = e.notifyAt ? new Date(e.notifyAt) : new Date(eventDate);
+    if (!e.notifyAt) visibleFrom.setDate(visibleFrom.getDate() - (e.noticeDays || 3));
     return now >= visibleFrom && eventDate >= now;
   });
   let list = inCat;
