@@ -198,7 +198,7 @@ html, body {
 }
 
 .row { display: flex; flex-direction: column; max-width: 100%; }
-.row.guide { align-items: flex-start; }
+.row.guide { flex-direction: row; align-items: flex-end; gap: 2px; }
 .row.user  { align-items: flex-end; }
 .row.msg   { flex-direction: row; align-items: center; gap: 4px; }
 
