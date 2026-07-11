@@ -354,6 +354,63 @@ html, body {
 }
 :root[data-contrast="high"] .card-top { background: #000 !important; }
 
+/* ============================================================
+   ONBOARDING — 4-page tap-to-choose survey shown on first visit.
+   Reuses .opt/.dot so colours, icons, focus states and high-contrast
+   handling all come for free from the rules above.
+   ============================================================ */
+#app[hidden] { display: none; }
+
+.onboarding {
+  position: fixed; inset: 0; z-index: 30;
+  background: var(--bg);
+  overflow-y: auto;
+}
+.onboarding[hidden] { display: none; }
+
+.onb-card {
+  width: 100%; max-width: 480px; margin: 0 auto;
+  min-height: 100dvh;
+  display: flex; flex-direction: column;
+  padding: 16px 18px 28px;
+}
+
+.onb-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.onb-progress { display: flex; gap: 6px; }
+.onb-progress .dot {
+  width: 10px; height: 10px; border-radius: 50%; background: var(--line);
+}
+.onb-progress .dot.active { background: var(--accent); }
+.onb-progress .dot.done { background: var(--accent); opacity: .5; }
+
+.onb-skip {
+  border: none; background: none; color: var(--ink-soft);
+  font-family: var(--font); font-size: .85rem; font-weight: 700;
+  text-decoration: underline; cursor: pointer; min-height: 44px; padding: 8px;
+}
+
+.avatar-lg { width: 64px; height: 64px; margin: 16px auto 6px; }
+.avatar-lg .ms { font-size: 2.2rem; }
+
+.onb-title { text-align: center; font-size: 1.4rem; margin: 4px 0 2px; }
+.onb-sub { text-align: center; color: var(--ink-soft); margin: 0 0 18px; font-size: .95rem; }
+
+.onb-options {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  flex: 1; align-content: start;
+}
+.onb-options.stack { grid-template-columns: 1fr; }
+
+/* Multi-select options (interests, accessibility needs): tapping
+   toggles a checkmark instead of disabling the other buttons. */
+.opt .check { margin-left: auto; opacity: 0; color: var(--accent); }
+.opt.selected .check { opacity: 1; }
+.opt.selected { border-color: var(--accent); background: var(--bg); }
+:root[data-contrast="high"] .opt.selected { border-color: var(--accent); }
+
+.onb-actions { display: flex; gap: 10px; margin-top: 18px; }
+.onb-actions .btn { flex: 1; }
+
 /* Respect users who ask for less motion. */
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; scroll-behavior: auto !important; }

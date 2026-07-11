@@ -56,6 +56,14 @@ const S = {
     cats: { food:"Food", people:"Meet people", kids:"Kids & family", health:"Health", learn:"Learn", money:"Money help" },
     free: "Free",
     justWalkIn: "Just walk in", stepFree: "Step-free", asl: "ASL",
+    onbSkip: "Skip setup", onbNext: "Next", onbBack: "Back", onbDone: "Done",
+    locTitle: "Where are you?", locSub: "This helps me find things close to you.",
+    loc: { kitchener:"Kitchener", waterloo:"Waterloo", cambridge:"Cambridge", townships:"Townships", notsure:"Not sure" },
+    intTitle: "What are you interested in?", intSub: "Pick as many as you like.",
+    ageTitle: "What's your age group?", ageSub: "This helps me show the right things for you.",
+    age: { child:"Under 12", teen:"13 to 17", adult:"18 to 64", senior:"65 and up" },
+    accessTitle: "Any accessibility needs?", accessSub: "Pick as many as you like. This is just for you.",
+    access: { lowvision:"Low vision or blind", deaf:"Deaf or hard of hearing", mobility:"Physical or mobility needs", intellectual:"Intellectual or learning disability", sensory:"Autism or sensory sensitivity", none:"None of these" },
   },
   fr: {
     greeting: "Bonjour, je m'appelle Robin. Je t'aide à trouver des activités gratuites près de chez toi.",
@@ -85,6 +93,14 @@ const S = {
     cats: { food:"Nourriture", people:"Rencontrer des gens", kids:"Enfants et famille", health:"Santé", learn:"Apprendre", money:"Aide financière" },
     free: "Gratuit",
     justWalkIn: "Entre sans rendez-vous", stepFree: "Sans marches", asl: "ASL",
+    onbSkip: "Passer", onbNext: "Suivant", onbBack: "Retour", onbDone: "Terminé",
+    locTitle: "Où es-tu ?", locSub: "Ça m'aide à trouver des activités près de chez toi.",
+    loc: { kitchener:"Kitchener", waterloo:"Waterloo", cambridge:"Cambridge", townships:"Cantons ruraux", notsure:"Je ne sais pas" },
+    intTitle: "Qu'est-ce qui t'intéresse ?", intSub: "Choisis-en autant que tu veux.",
+    ageTitle: "Quel est ton groupe d'âge ?", ageSub: "Ça m'aide à te montrer les bonnes activités.",
+    age: { child:"Moins de 12 ans", teen:"13 à 17 ans", adult:"18 à 64 ans", senior:"65 ans et plus" },
+    accessTitle: "As-tu des besoins d'accessibilité ?", accessSub: "Choisis-en autant que tu veux. C'est juste pour toi.",
+    access: { lowvision:"Basse vision ou aveugle", deaf:"Sourd ou malentendant", mobility:"Besoins physiques ou de mobilité", intellectual:"Déficience intellectuelle ou trouble d'apprentissage", sensory:"Autisme ou sensibilité sensorielle", none:"Aucun de ces besoins" },
   },
   es: {
     greeting: "Hola, soy Robin. Te ayudo a encontrar cosas gratis cerca de ti.",
@@ -114,6 +130,14 @@ const S = {
     cats: { food:"Comida", people:"Conocer gente", kids:"Niños y familia", health:"Salud", learn:"Aprender", money:"Ayuda con dinero" },
     free: "Gratis",
     justWalkIn: "Entra sin cita", stepFree: "Sin escalones", asl: "ASL",
+    onbSkip: "Omitir", onbNext: "Siguiente", onbBack: "Atrás", onbDone: "Listo",
+    locTitle: "¿Dónde estás?", locSub: "Esto me ayuda a encontrar cosas cerca de ti.",
+    loc: { kitchener:"Kitchener", waterloo:"Waterloo", cambridge:"Cambridge", townships:"Zonas rurales", notsure:"No estoy seguro" },
+    intTitle: "¿Qué te interesa?", intSub: "Elige tantos como quieras.",
+    ageTitle: "¿Cuál es tu grupo de edad?", ageSub: "Esto me ayuda a mostrarte lo correcto.",
+    age: { child:"Menos de 12", teen:"13 a 17", adult:"18 a 64", senior:"65 o más" },
+    accessTitle: "¿Tienes alguna necesidad de accesibilidad?", accessSub: "Elige tantas como quieras. Esto es solo para ti.",
+    access: { lowvision:"Baja visión o ciego", deaf:"Sordo o con dificultad auditiva", mobility:"Necesidades físicas o de movilidad", intellectual:"Discapacidad intelectual o de aprendizaje", sensory:"Autismo o sensibilidad sensorial", none:"Ninguna de estas" },
   },
 };
 const t = key => S[state.lang][key];
@@ -405,6 +429,159 @@ function addCard(ev) {
   return card;
 }
 
+/* ---------- onboarding survey (first visit only) ----------
+   Four tap-to-choose menus: location, interests, age group,
+   accessibility needs. Same rule as the rest of the app: every
+   option is colour + icon + word, always together. Colours are
+   reused from the six category hues above — each menu is a
+   separate full screen, so there's no ambiguity in reusing them. */
+const REGIONS = [
+  { key:'kitchener', ms:'location_city',   cls:'c-food' },
+  { key:'waterloo',  ms:'account_balance', cls:'c-people' },
+  { key:'cambridge', ms:'cottage',         cls:'c-kids' },
+  { key:'townships', ms:'landscape',       cls:'c-health' },
+  { key:'notsure',   pict:'help',          cls:'c-learn' },
+];
+const AGE_GROUPS = [
+  { key:'child',  ms:'child_care', cls:'c-food' },
+  { key:'teen',   ms:'school',     cls:'c-people' },
+  { key:'adult',  ms:'person',     cls:'c-kids' },
+  { key:'senior', ms:'elderly',    cls:'c-health' },
+];
+const ACCESS_NEEDS = [
+  { key:'lowvision',    ms:'visibility_off', cls:'c-food' },
+  { key:'deaf',         pict:'deaf',         cls:'c-people' },
+  { key:'mobility',     pict:'wheelchair',   cls:'c-kids' },
+  { key:'intellectual', ms:'psychology',     cls:'c-health' },
+  { key:'sensory',      ms:'spa',            cls:'c-learn' },
+  { key:'none',         ms:'check_circle',   cls:'c-money' },
+];
+const ONB_STEPS = ['location', 'interests', 'age', 'access'];
+let onbIndex = 0;
+const onbAnswers = { location: null, interests: [], age: null, access: [] };
+
+function makeOptBtn(o, label) {
+  const visual = o.pict
+    ? `<span class="dot"><img src="${pict(o.pict)}" alt=""></span>`
+    : `<span class="dot"><span class="ms" aria-hidden="true">${o.ms}</span></span>`;
+  const btn = el(`<button type="button" class="opt ${o.cls}">${visual}<span class="opt-label"></span></button>`);
+  btn.dataset.key = o.key;
+  btn.querySelector('.opt-label').textContent = label;
+  return btn;
+}
+
+function makeSingleOpt(o, label, onPick) {
+  const btn = makeOptBtn(o, label);
+  btn.addEventListener('click', () => {
+    $('#onbOptions').querySelectorAll('.opt').forEach(b => { b.disabled = true; });
+    btn.classList.add('picked');
+    onPick();
+  });
+  return btn;
+}
+
+/* `exclusiveKey` (e.g. "none of these") clears/blocks the rest of the group. */
+function makeMultiOpt(o, label, targetArr, exclusiveKey) {
+  const btn = makeOptBtn(o, label);
+  btn.classList.add('multi');
+  btn.appendChild(el(`<span class="check ms" aria-hidden="true">check_circle</span>`));
+  if (targetArr.includes(o.key)) btn.classList.add('selected');
+  btn.addEventListener('click', () => {
+    const idx = targetArr.indexOf(o.key);
+    if (idx !== -1) { targetArr.splice(idx, 1); btn.classList.remove('selected'); return; }
+    if (exclusiveKey && o.key === exclusiveKey) {
+      targetArr.length = 0;
+      $('#onbOptions').querySelectorAll('.opt.selected').forEach(b => b.classList.remove('selected'));
+    } else if (exclusiveKey) {
+      const ni = targetArr.indexOf(exclusiveKey);
+      if (ni !== -1) {
+        targetArr.splice(ni, 1);
+        $('#onbOptions').querySelector(`.opt[data-key="${exclusiveKey}"]`)?.classList.remove('selected');
+      }
+    }
+    targetArr.push(o.key);
+    btn.classList.add('selected');
+  });
+  return btn;
+}
+
+function actionBtn(label, ms, cls, onClick) {
+  const btn = el(`<button type="button" class="btn ${cls || ''}"><span class="ms" aria-hidden="true">${ms}</span><span></span></button>`);
+  btn.querySelector('span:last-child').textContent = label;
+  btn.addEventListener('click', onClick);
+  return btn;
+}
+
+function onbProgressHTML() {
+  return ONB_STEPS.map((_, i) =>
+    `<span class="dot ${i < onbIndex ? 'done' : ''} ${i === onbIndex ? 'active' : ''}"></span>`
+  ).join('');
+}
+
+function renderOnboardStep() {
+  const step = ONB_STEPS[onbIndex];
+  const progress = $('#onbProgress');
+  progress.innerHTML = onbProgressHTML();
+  progress.setAttribute('aria-label', `Step ${onbIndex + 1} of ${ONB_STEPS.length}`);
+  $('#onbSkip').textContent = t('onbSkip');
+
+  const options = $('#onbOptions');
+  const actions = $('#onbActions');
+  options.innerHTML = '';
+  actions.innerHTML = '';
+
+  if (onbIndex > 0) actions.appendChild(actionBtn(t('onbBack'), 'arrow_back', '', onbBack));
+
+  if (step === 'location') {
+    $('#onbTitle').textContent = t('locTitle');
+    $('#onbSub').textContent = t('locSub');
+    options.className = 'onb-options stack';
+    REGIONS.forEach(r => options.appendChild(makeSingleOpt(r, t('loc')[r.key], () => { onbAnswers.location = r.key; onbNext(); })));
+  } else if (step === 'interests') {
+    $('#onbTitle').textContent = t('intTitle');
+    $('#onbSub').textContent = t('intSub');
+    options.className = 'onb-options';
+    CATS.forEach(c => options.appendChild(makeMultiOpt(c, t('cats')[c.key], onbAnswers.interests)));
+    actions.appendChild(actionBtn(t('onbNext'), 'arrow_forward', 'primary', onbNext));
+  } else if (step === 'age') {
+    $('#onbTitle').textContent = t('ageTitle');
+    $('#onbSub').textContent = t('ageSub');
+    options.className = 'onb-options stack';
+    AGE_GROUPS.forEach(a => options.appendChild(makeSingleOpt(a, t('age')[a.key], () => { onbAnswers.age = a.key; onbNext(); })));
+  } else if (step === 'access') {
+    $('#onbTitle').textContent = t('accessTitle');
+    $('#onbSub').textContent = t('accessSub');
+    options.className = 'onb-options';
+    ACCESS_NEEDS.forEach(a => options.appendChild(makeMultiOpt(a, t('access')[a.key], onbAnswers.access, 'none')));
+    actions.appendChild(actionBtn(t('onbDone'), 'check', 'primary', finishOnboarding));
+  }
+
+  $('#onboarding').scrollTop = 0;
+  $('#onbTitle').focus({ preventScroll: true });
+}
+
+function onbNext() {
+  if (onbIndex < ONB_STEPS.length - 1) { onbIndex++; renderOnboardStep(); }
+  else finishOnboarding();
+}
+function onbBack() {
+  if (onbIndex > 0) { onbIndex--; renderOnboardStep(); }
+}
+function finishOnboarding() {
+  localStorage.setItem('belong-prefs', JSON.stringify(onbAnswers));
+  localStorage.setItem('belong-onboarded', '1');
+  $('#onboarding').hidden = true;
+  $('#app').hidden = false;
+  greet();
+}
+function startOnboarding() {
+  $('#app').hidden = true;
+  $('#onboarding').hidden = false;
+  onbIndex = 0;
+  renderOnboardStep();
+}
+$('#onbSkip').addEventListener('click', finishOnboarding);
+
 /* ---------- conversation flow ---------- */
 function greet() {
   addGuide(t('greeting'));
@@ -563,10 +740,13 @@ function restart() {
   stopSpeech();
   chat.innerHTML = '';
   state.cat = null; state.queue = []; state.shown = 0;
-  greet();
+  localStorage.removeItem('belong-onboarded');
+  onbAnswers.location = null; onbAnswers.interests = []; onbAnswers.age = null; onbAnswers.access = [];
+  startOnboarding();
 }
 $('#startOver').addEventListener('click', restart);
 
 /* ---------- go ---------- */
 applySettings();
-greet();
+if (localStorage.getItem('belong-onboarded') === '1') greet();
+else startOnboarding();

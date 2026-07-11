@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="styles.css" />
   <style>
     /* Small page-specific layer on top of the shared stylesheet. */
@@ -39,6 +40,25 @@
     .check-row input { width: 26px; height: 26px; accent-color: var(--accent); flex: 0 0 auto; }
     .check-row img { width: 30px; height: 30px; object-fit: contain; }
     .check-row span { font-weight: 700; }
+    .map-help { margin: 0; color: var(--ink-soft); font-size: .85rem; line-height: 1.4; }
+    .location-picker { display: none; position: relative; }
+    .location-picker.open { display: block; }
+    .location-results {
+      display: none; position: absolute; z-index: 1001; top: 0; left: 8px; right: 8px;
+      max-height: 190px; overflow-y: auto; border: 2px solid var(--line);
+      border-radius: 12px; background: var(--app); box-shadow: 0 8px 24px rgba(0,0,0,.18);
+    }
+    .location-results.show { display: block; }
+    .location-result {
+      display: block; width: 100%; border: 0; border-bottom: 1px solid var(--line);
+      padding: 12px; background: var(--app); color: var(--ink); text-align: left;
+      font-family: var(--font); font-size: .9rem; line-height: 1.35; cursor: pointer;
+    }
+    .location-result:last-child { border-bottom: 0; }
+    .location-result:hover, .location-result:focus { background: var(--bg); }
+    #locationMap { height: 300px; border: 2px solid var(--line); border-radius: 14px; z-index: 1; }
+    .map-status { margin: 8px 2px 0; color: var(--ink-soft); font-size: .85rem; line-height: 1.4; }
+    .leaflet-control-attribution { font-size: 10px; }
     .submit-btn {
       min-height: 64px; border: none; border-radius: 16px; cursor: pointer;
       background: var(--accent); color: #fff; font-family: var(--font);
@@ -67,7 +87,7 @@
     </header>
 
     <div class="form-wrap">
-      <p class="lead">Fill this in once — it reaches the app, the website widget, and the text line all at the same time.</p>
+      <p class="lead">Add an opportunity once and it appears in the Belong prototype on this device. A shared database, website widget, and text line are documented next steps.</p>
 
       <form id="postForm">
         <div class="field" style="margin-bottom:18px">
@@ -102,7 +122,13 @@
 
         <div class="field" style="margin-bottom:18px">
           <label for="fPlace">Where? (place and street)</label>
-          <input id="fPlace" type="text" required placeholder="97 Victoria St N, Kitchener" />
+          <input id="fPlace" type="text" required autocomplete="off" aria-describedby="mapHelp mapStatus" aria-expanded="false" placeholder="Type an address or choose it on the map" />
+          <p class="map-help" id="mapHelp">Start typing to search. You can also move the map and tap the exact location.</p>
+          <div class="location-picker" id="locationPicker">
+            <div class="location-results" id="locationResults" role="listbox" aria-label="Location suggestions"></div>
+            <div id="locationMap" aria-label="Interactive location map"></div>
+            <p class="map-status" id="mapStatus" role="status">Tap the map to choose the exact location.</p>
+          </div>
         </div>
 
         <fieldset class="field" style="margin:0 0 18px; border:none; padding:0">
@@ -137,6 +163,7 @@
     </p>
   </div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script>
     'use strict';
     /* Category picker mirrors the app's pictogram+word buttons. */
@@ -163,6 +190,99 @@
       return `${h}:${String(m).padStart(2, '0')} ${half}`;
     }
 
+    const placeInput = document.getElementById('fPlace');
+    const locationPicker = document.getElementById('locationPicker');
+    const locationResults = document.getElementById('locationResults');
+    const mapStatus = document.getElementById('mapStatus');
+    let locationMap;
+    let locationMarker;
+    let searchTimer;
+    let searchController;
+
+    function openLocationPicker() {
+      locationPicker.classList.add('open');
+      placeInput.setAttribute('aria-expanded', 'true');
+      if (!locationMap && window.L) {
+        locationMap = L.map('locationMap').setView([43.4516, -80.4925], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(locationMap);
+        locationMap.on('click', e => chooseMapPoint(e.latlng.lat, e.latlng.lng));
+      }
+      setTimeout(() => locationMap?.invalidateSize(), 0);
+    }
+
+    function setMapLocation(lat, lon, label) {
+      const point = [Number(lat), Number(lon)];
+      if (locationMarker) locationMarker.setLatLng(point);
+      else locationMarker = L.marker(point).addTo(locationMap);
+      locationMap.setView(point, 16);
+      placeInput.value = label;
+      locationResults.classList.remove('show');
+      mapStatus.textContent = `Selected: ${label}`;
+    }
+
+    async function chooseMapPoint(lat, lon) {
+      mapStatus.textContent = 'Finding this address…';
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+        const response = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+        if (!response.ok) throw new Error('Address lookup failed');
+        const result = await response.json();
+        setMapLocation(lat, lon, result.display_name || `${lat.toFixed(5)}, ${lon.toFixed(5)}`);
+      } catch {
+        setMapLocation(lat, lon, `${lat.toFixed(5)}, ${lon.toFixed(5)}`);
+        mapStatus.textContent = 'Pin selected. Please type the street address above.';
+      }
+    }
+
+    function showLocationResults(results) {
+      locationResults.replaceChildren();
+      results.forEach(result => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'location-result';
+        button.setAttribute('role', 'option');
+        button.textContent = result.display_name;
+        button.addEventListener('click', () => setMapLocation(result.lat, result.lon, result.display_name));
+        locationResults.appendChild(button);
+      });
+      locationResults.classList.toggle('show', results.length > 0);
+    }
+
+    async function searchLocations(query) {
+      searchController?.abort();
+      searchController = new AbortController();
+      mapStatus.textContent = 'Searching for places…';
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=ca&q=${encodeURIComponent(query)}`;
+        const response = await fetch(url, {
+          signal: searchController.signal,
+          headers: { 'Accept-Language': 'en' }
+        });
+        if (!response.ok) throw new Error('Place search failed');
+        const results = await response.json();
+        showLocationResults(results);
+        mapStatus.textContent = results.length ? 'Choose a suggestion or tap the map.' : 'No places found. Try adding the city.';
+      } catch (error) {
+        if (error.name !== 'AbortError') mapStatus.textContent = 'Place search is unavailable. You can still tap the map or type the address.';
+      }
+    }
+
+    placeInput.addEventListener('focus', openLocationPicker);
+    placeInput.addEventListener('input', () => {
+      openLocationPicker();
+      clearTimeout(searchTimer);
+      const query = placeInput.value.trim();
+      if (query.length < 3) {
+        locationResults.classList.remove('show');
+        mapStatus.textContent = 'Type at least 3 letters, or tap the map.';
+        return;
+      }
+      searchTimer = setTimeout(() => searchLocations(query), 500);
+    });
+
     document.getElementById('postForm').addEventListener('submit', e => {
       e.preventDefault();
       const cat = document.querySelector('input[name="cat"]:checked').value;
@@ -186,6 +306,8 @@
       document.getElementById('doneNote').style.display = 'block';
       document.getElementById('doneNote').scrollIntoView({ block: 'nearest' });
       e.target.reset();
+      locationResults.classList.remove('show');
+      mapStatus.textContent = 'Tap the map to choose the exact location.';
     });
   </script>
 </body>

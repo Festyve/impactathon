@@ -22,7 +22,9 @@ python3 -m http.server 4173
 ## The two flows (the deliverables)
 
 1. **How a community member discovers an event:** open the app → Robin asks "What do you need today?" → tap a picture (e.g. Food) → tap when → get an Easy Read event card → tap "I'll go" → optional reminder. Two taps from opening the app to seeing where lunch is.
-2. **How a nonprofit posts one:** open `post.html` → seven quick fields (same effort as a calendar entry, ~1 minute) → Post it → the event is immediately discoverable in the app. Organizations manage their own postings; no central administrator.
+2. **How a nonprofit posts one:** open `post.html` → seven quick fields (same effort as a calendar entry, ~1 minute) → Post it → the opportunity is immediately discoverable in the prototype on the same device.
+
+See [`HANDOFF.md`](HANDOFF.md) for the participant-package alignment, implementation boundary, decisions, gaps, and continuation plan. See [`PITCH.md`](PITCH.md) for the 60-second pitch and 2.5-minute demo route.
 
 ## Why it looks the way it does — every choice is grounded in established practice
 
@@ -63,7 +65,7 @@ This app is built on methods disability services already use every day. It's not
 
 **Next (in rough order):**
 1. **Real shared backend** — swap localStorage for a small hosted DB (e.g. Supabase/Postgres: `events` + `orgs` tables; the front end already treats events as one JSON array, so this is a thin swap). Add org accounts + per-org permissions, edit/remove, scheduled postings, auto-archiving of past events (all straightforward once a DB exists).
-2. **Embeddable widget** — the spec's "major requirement." The chat is already a self-contained column; package it as an `<iframe>`/`<script>` embed with a `?org=` filter so each organization's website shows all opportunities, only theirs, or a custom filtered view.
+2. **Embeddable widget** — the chat is already a self-contained column; package it as an `<iframe>`/`<script>` embed with a `?org=` filter so each organization's website shows all opportunities, only theirs, or a custom filtered view.
 3. **SMS twin** — the same question/answer script over text messages (Twilio webhook, ~150 lines): serves people with flip phones/no data, and Deaf users for whom text is primary. The conversation design already *is* an SMS conversation.
 4. **More filters as questions** — age group, virtual/in-person, interests — each is one more friendly question, not a filter panel.
 5. **Registration links & photos on cards**, org profiles/branding, remaining spec items (export/import, API).
@@ -71,6 +73,7 @@ This app is built on methods disability services already use every day. It's not
 ## What we didn't solve (honest gaps)
 
 - **Reminders are simulated** — saving a reminder stores it locally; really sending one needs the SMS backend (next step 3).
+- **Posting is device-local in the prototype** — a submitted opportunity is stored in `localStorage`, so it appears in the discovery flow on that browser only. Shared multi-organization contribution, accounts, editing, and moderation require the planned backend.
 - **Deaf users who sign as a first language:** text + pictures serve low-literacy Deaf users, but ASL-first users would be best served by sign-language video, which needs real production work — flagged, not faked. (The ✋ ASL event tag exists so interpreted events are findable today.)
 - **Blind + no phone:** no remote tool reaches someone with no device; our answer is the helper-mediated flow (a caseworker uses the app with them) and, later, the SMS/voice line at libraries and shelters.
 - **Event translations:** the interface is trilingual; event titles/places stay as posted. Machine-translating event content is possible but we'd want a human-in-the-loop before promising it.
