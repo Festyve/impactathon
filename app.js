@@ -170,13 +170,107 @@ const pict = name => `assets/pictograms/${name}.png`;
 
 /* ---------- speech out (light SGD-style voice output) ---------- */
 const VOICE_LANG = { en:'en-CA', fr:'fr-CA', es:'es-ES' };
-function speak(text) {
+
+/* Voices load asynchronously — cache them and refresh on `voiceschanged`. */
+let _voices = [];
+function refreshVoices() {
+  if (!('speechSynthesis' in window)) return;
+  _voices = speechSynthesis.getVoices() || [];
+}
+if ('speechSynthesis' in window) {
+  refreshVoices();
+  speechSynthesis.addEventListener?.('voiceschanged', refreshVoices);
+}
+
+/* Names that signal a modern, natural-sounding voice… */
+const GOOD_VOICE = /natural|neural|google|siri|samantha|premium|enhanced|aria|jenny|libby|guy/i;
+/* …and legacy/novelty voices that sound robotic ("alien"). */
+const BAD_VOICE  = /albert|zarvox|fred|bad news|cellos|bells|boing|bubbles|deranged|hysterical|trinoids|whisper|wobble|organ|good news|jester|superstar|junior|kathy|ralph|bahh|novelty/i;
+
+/* Pick the most human-sounding installed voice for a language tag. */
+function pickVoice(langTag) {
+  if (!_voices.length) refreshVoices();
+  const base = langTag.split('-')[0].toLowerCase();
+  const candidates = _voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(base));
+  if (!candidates.length) return null;
+  const score = v => {
+    let s = 0;
+    if (v.lang.toLowerCase() === langTag.toLowerCase()) s += 3; /* exact regional match */
+    if (GOOD_VOICE.test(v.name)) s += 5;
+    if (BAD_VOICE.test(v.name)) s -= 10;
+    if (v.localService === false) s += 2; /* online voices tend to be neural */
+    if (v.default) s += 1;
+    return s;
+  };
+  return candidates.slice().sort((a, b) => score(b) - score(a))[0];
+}
+
+/* Fallback: browser Web Speech API (used when ElevenLabs is unavailable). */
+function speakLocal(text) {
   if (!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = VOICE_LANG[state.lang];
-  u.rate = 0.92; /* a touch slower than default — easier to follow */
+  const voice = pickVoice(u.lang);
+  if (voice) u.voice = voice;
+  u.rate = 0.98;  /* natural, unhurried cadence */
+  u.pitch = 1.0;  /* neutral, human tone */
   speechSynthesis.speak(u);
+}
+
+/* ---------- Generative Voice AI (ElevenLabs) ----------
+   Paste an ElevenLabs API key below to get natural, human-sounding speech.
+   NOTE: this is a client-side demo key — it is visible in the page source.
+   Use a free-tier / usage-restricted key. If left empty, the app cleanly
+   falls back to the browser's built-in voice (speakLocal). */
+const ELEVEN_API_KEY  = '';                       /* <-- paste ElevenLabs key here */
+const ELEVEN_VOICE_ID = '21m00Tcm4TlvDq8ikWAM';   /* "Rachel" — a natural preset voice */
+const ELEVEN_MODEL    = 'eleven_multilingual_v2'; /* handles en / fr / es */
+
+let currentAudio = null;                 /* the utterance currently playing */
+const _ttsCache = new Map();             /* lang|text -> object URL, avoids re-fetching */
+
+/* Stop whatever is currently speaking (ElevenLabs audio or Web Speech). */
+function stopSpeech() {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+}
+
+function playAudioUrl(url) {
+  stopSpeech();
+  const audio = new Audio(url);
+  currentAudio = audio;
+  audio.play().catch(() => {});   /* autoplay can be blocked before user interaction */
+}
+
+async function speak(text) {
+  if (!text) return;
+  if (!ELEVEN_API_KEY) { stopSpeech(); speakLocal(text); return; }
+
+  const key = state.lang + '|' + text;
+  if (_ttsCache.has(key)) { playAudioUrl(_ttsCache.get(key)); return; }
+
+  try {
+    const res = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${ELEVEN_VOICE_ID}?output_format=mp3_44100_128`,
+      {
+        method: 'POST',
+        headers: { 'xi-api-key': ELEVEN_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          model_id: ELEVEN_MODEL,
+          voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+        })
+      }
+    );
+    if (!res.ok) throw new Error(`ElevenLabs ${res.status}`);
+    const url = URL.createObjectURL(await res.blob());
+    _ttsCache.set(key, url);
+    playAudioUrl(url);
+  } catch (err) {
+    console.warn('ElevenLabs TTS failed, falling back to browser voice:', err);
+    speakLocal(text);
+  }
 }
 
 /* ---------- chat primitives ---------- */
@@ -414,7 +508,7 @@ $('#btnSound').addEventListener('click', () => {
   state.sound = !state.sound;
   localStorage.setItem('belong-sound', state.sound ? 'on' : 'off');
   applySettings();
-  if (state.sound) speak(t('soundOn')); else speechSynthesis?.cancel();
+  if (state.sound) speak(t('soundOn')); else stopSpeech();
 });
 
 $('#btnLang').addEventListener('click', () => {
@@ -425,7 +519,7 @@ $('#btnLang').addEventListener('click', () => {
 });
 
 function restart() {
-  speechSynthesis?.cancel();
+  stopSpeech();
   chat.innerHTML = '';
   state.cat = null; state.queue = []; state.shown = 0;
   greet();
