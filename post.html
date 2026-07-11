@@ -188,7 +188,7 @@
       </form>
 
       <p class="done-note" id="doneNote" role="status">
-        <span id="doneMessage">Posted! It's live in the app right now.</span>
+        <span id="doneMessage">Posted! Members are getting a message about it now.</span>
         <a href="index.html">Open the app and see it →</a>
       </p>
     </div>
@@ -393,8 +393,8 @@
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       document.getElementById('doneMessage').textContent = shareDate <= today
-        ? 'Posted. Members can see it now. '
-        : `Posted. Members should start seeing it ${shareDate.toLocaleString('en-CA', { month:'long', day:'numeric', hour:'numeric', minute:'2-digit' })}. `;
+        ? 'Posted. Members are getting a message about it now. '
+        : `Posted. Members will get a message about it ${shareDate.toLocaleString('en-CA', { month:'long', day:'numeric', hour:'numeric', minute:'2-digit' })}. `;
       document.getElementById('doneNote').style.display = 'block';
       document.getElementById('doneNote').scrollIntoView({ block: 'nearest' });
       e.target.reset();

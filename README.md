@@ -21,8 +21,8 @@ python3 -m http.server 4173
 
 ## The two flows (the deliverables)
 
-1. **How a community member discovers an event:** open the app with no setup → Robin asks "What do you need today?" → tap a picture (e.g. Food) → tap when → get one Easy Read event card → tap "I'll go" → optional reminder. Two taps from opening the app to seeing where lunch is; typing is never required.
-2. **How a nonprofit posts one:** open `post.html` → seven quick fields (same effort as a calendar entry, ~1 minute) → Post it → the opportunity is immediately discoverable in the prototype on the same device.
+1. **How a community member hears about an event:** first open → a quick tap-only setup (location, interests, age, accessibility needs) → Robin sends one intro message ("I will message you about future KW Habilitation events") → from then on, every relevant new event arrives as its own text-style message with an Easy Read card → tap "I'll go" → optional reminder. Bookings can be seen or cancelled any time in My bookings; typing is never required.
+2. **How a nonprofit posts one:** open `post.html` → seven quick fields (same effort as a calendar entry, ~1 minute) → Post it → members whose interests and location match get Robin's message about it right away (in the prototype, on the same device).
 
 See [`HANDOFF.md`](HANDOFF.md) for the participant-package alignment, implementation boundary, decisions, gaps, and continuation plan. See [`PITCH.md`](PITCH.md) for the 60-second pitch and 2.5-minute demo route.
 
@@ -58,7 +58,7 @@ This app is built on methods disability services already use every day. It's not
 ## What we built vs. what we'd build next
 
 **In the prototype:**
-- The full discovery conversation (category → when → Easy Read cards → "I'll go" → reminder), 11 seeded realistic KW events + any events posted through the form
+- The full messaging flow (onboarding survey → intro message → one message per relevant event → "I'll go" → reminder), 11 seeded realistic KW events + any events posted through the form
 - The organization posting form, feeding the same event pool (localStorage as the stand-in database), with a free map picker, a default 3-day notice window, and optional registration details
 - All accessibility modes above, working
 - "I'll go" analytics seed (a tap counter — the spec's engagement nice-to-have)

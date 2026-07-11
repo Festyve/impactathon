@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="description" content="Belong — a simple, spoken, texting-style way to find free things to do near you. Built for everyone." />
-  <title>Belong — find things to do near you</title>
+  <meta name="description" content="Belong — Robin texts you about free things to do near you. Built for everyone." />
+  <title>Belong — free events, messaged to you</title>
 
   <!-- Online assets: Atkinson Hyperlegible is a typeface designed by the Braille Institute for low-vision readers.
        Material Symbols gives us big, friendly, universally familiar icons. Both load free from Google Fonts. -->
@@ -36,8 +36,8 @@
     <header class="app-header">
       <div class="avatar" aria-hidden="true"><span class="ms">volunteer_activism</span></div>
       <div class="who">
-        <p class="who-name">Belong</p>
-        <p class="who-sub">Finds free things near you</p>
+        <p class="who-name">Robin</p>
+        <p class="who-sub">Messages you about free events near you</p>
       </div>
       <button class="home-btn" id="startOver" type="button">
         <span class="ms" aria-hidden="true">restart_alt</span>
@@ -48,13 +48,13 @@
       </button>
     </header>
 
-    <!-- Two big tabs: keep finding things, or manage what you've booked.
+    <!-- Two big tabs: read Robin's messages, or manage what you've booked.
          WAI-ARIA tabs pattern: arrow keys move between tabs, panels swap below.
          (The accessibility controls that used to sit in a toolbar here now live
          behind the settings gear in the header.) -->
     <div class="tabs" role="tablist" aria-label="Sections">
       <button class="tab-btn" id="tabFind" type="button" role="tab" aria-selected="true" aria-controls="panelFind">
-        <span class="ms" aria-hidden="true">search</span><span class="tab-label" id="tabFindLabel">Find things</span>
+        <span class="ms" aria-hidden="true">chat</span><span class="tab-label" id="tabFindLabel">Messages</span>
       </button>
       <button class="tab-btn" id="tabBooked" type="button" role="tab" aria-selected="false" aria-controls="panelBooked" tabindex="-1">
         <span class="ms" aria-hidden="true">event_available</span><span class="tab-label" id="tabBookedLabel">My bookings</span>
@@ -62,7 +62,7 @@
       </button>
     </div>
 
-    <!-- The conversation. role="log" + aria-live means a screen reader speaks each new message. -->
+    <!-- Robin's messages. role="log" + aria-live means a screen reader speaks each new message. -->
     <div class="panel" id="panelFind" role="tabpanel" aria-labelledby="tabFind">
       <main class="chat" id="chat" role="log" aria-live="polite" aria-relevant="additions" tabindex="-1"></main>
     </div>
@@ -102,6 +102,24 @@
     <p class="credit">
       Symbols: <a href="https://arasaac.org" target="_blank" rel="noopener">ARASAAC</a> — Sergio Palao, Gobierno de Aragón (CC BY-NC-SA)
     </p>
+  </div>
+
+  <!-- Onboarding: a one-time, four-question tap survey (location, interests,
+       age, accessibility needs) shown on first open. Robin uses the answers
+       to decide which events to message the user about. Same PECS/AAC rule
+       as everywhere: every option is colour + icon + word, always together. -->
+  <div class="onboarding" id="onboarding" hidden>
+    <div class="onb-card">
+      <div class="onb-top">
+        <div class="onb-progress" id="onbProgress" role="img"></div>
+        <button type="button" class="onb-skip" id="onbSkip">Skip setup</button>
+      </div>
+      <div class="avatar avatar-lg" aria-hidden="true"><span class="ms">volunteer_activism</span></div>
+      <h1 class="onb-title" id="onbTitle" tabindex="-1"></h1>
+      <p class="onb-sub" id="onbSub"></p>
+      <div class="onb-options" id="onbOptions"></div>
+      <div class="onb-actions" id="onbActions"></div>
+    </div>
   </div>
 
   <!-- Settings: the accessibility controls, one tap behind the gear.
@@ -155,6 +173,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
