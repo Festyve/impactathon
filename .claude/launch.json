@@ -12,6 +12,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["-y", "serve", "-l", "8090", "."],
       "port": 8090
+    },
+    {
+      "name": "static-auto",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "serve", "."],
+      "autoPort": true
     }
   ]
 }

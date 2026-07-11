@@ -21,7 +21,7 @@ python3 -m http.server 4173
 
 ## The two flows (the deliverables)
 
-1. **How a community member discovers an event:** open the app → Robin asks "What do you need today?" → tap a picture (e.g. Food) → tap when → get an Easy Read event card → tap "I'll go" → optional reminder. Two taps from opening the app to seeing where lunch is.
+1. **How a community member discovers an event:** open the app with no setup → Robin asks "What do you need today?" → tap a picture (e.g. Food) → tap when → get one Easy Read event card → tap "I'll go" → optional reminder. Two taps from opening the app to seeing where lunch is; typing is never required.
 2. **How a nonprofit posts one:** open `post.html` → seven quick fields (same effort as a calendar entry, ~1 minute) → Post it → the opportunity is immediately discoverable in the prototype on the same device.
 
 See [`HANDOFF.md`](HANDOFF.md) for the participant-package alignment, implementation boundary, decisions, gaps, and continuation plan. See [`PITCH.md`](PITCH.md) for the 60-second pitch and 2.5-minute demo route.
@@ -59,7 +59,7 @@ This app is built on methods disability services already use every day. It's not
 
 **In the prototype:**
 - The full discovery conversation (category → when → Easy Read cards → "I'll go" → reminder), 11 seeded realistic KW events + any events posted through the form
-- The organization posting form, feeding the same event pool (localStorage as the stand-in database)
+- The organization posting form, feeding the same event pool (localStorage as the stand-in database), with a free map picker, a default 3-day notice window, and optional registration details
 - All accessibility modes above, working
 - "I'll go" analytics seed (a tap counter — the spec's engagement nice-to-have)
 
@@ -72,7 +72,7 @@ This app is built on methods disability services already use every day. It's not
 
 ## What we didn't solve (honest gaps)
 
-- **Reminders are simulated** — saving a reminder stores it locally; really sending one needs the SMS backend (next step 3).
+- **Reminders and outbound notices are simulated** — the prototype applies 1-, 3-, or 7-day visibility timing locally and stores reminders locally; actually sending SMS, email, or push notifications needs a shared backend and delivery service.
 - **Posting is device-local in the prototype** — a submitted opportunity is stored in `localStorage`, so it appears in the discovery flow on that browser only. Shared multi-organization contribution, accounts, editing, and moderation require the planned backend.
 - **Deaf users who sign as a first language:** text + pictures serve low-literacy Deaf users, but ASL-first users would be best served by sign-language video, which needs real production work — flagged, not faked. (The ✋ ASL event tag exists so interpreted events are findable today.)
 - **Blind + no phone:** no remote tool reaches someone with no device; our answer is the helper-mediated flow (a caseworker uses the app with them) and, later, the SMS/voice line at libraries and shelters.

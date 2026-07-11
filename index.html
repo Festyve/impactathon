@@ -18,23 +18,6 @@
 <body>
   <a class="skip-link" href="#chat">Skip to messages</a>
 
-  <!-- First-run onboarding: 4 tap-to-choose menus (location, interests,
-       age group, accessibility needs). Same PECS/AAC rule as the rest of
-       the app: every option is colour + icon + word, always together. -->
-  <div class="onboarding" id="onboarding" hidden>
-    <div class="onb-card">
-      <div class="onb-top">
-        <div class="onb-progress" id="onbProgress" role="img"></div>
-        <button type="button" class="onb-skip" id="onbSkip">Skip setup</button>
-      </div>
-      <div class="avatar avatar-lg" aria-hidden="true"><span class="ms">volunteer_activism</span></div>
-      <h1 class="onb-title" id="onbTitle" tabindex="-1"></h1>
-      <p class="onb-sub" id="onbSub"></p>
-      <div class="onb-options" id="onbOptions"></div>
-      <div class="onb-actions" id="onbActions"></div>
-    </div>
-  </div>
-
   <div class="app" id="app">
     <!-- Who you're talking to. A named, friendly guide reads as a person, not a database. -->
     <header class="app-header">
@@ -52,20 +35,56 @@
       </button>
     </header>
 
-    <!-- The conversation. role="log" + aria-live means a screen reader speaks each new message. -->
-    <main class="chat" id="chat" role="log" aria-live="polite" aria-relevant="additions" tabindex="-1"></main>
+    <!-- Two big tabs: keep finding things, or manage what you've booked.
+         WAI-ARIA tabs pattern: arrow keys move between tabs, panels swap below.
+         (The accessibility controls that used to sit in a toolbar here now live
+         behind the settings gear in the header.) -->
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab-btn" id="tabFind" type="button" role="tab" aria-selected="true" aria-controls="panelFind">
+        <span class="ms" aria-hidden="true">search</span><span class="tab-label" id="tabFindLabel">Find things</span>
+      </button>
+      <button class="tab-btn" id="tabBooked" type="button" role="tab" aria-selected="false" aria-controls="panelBooked" tabindex="-1">
+        <span class="ms" aria-hidden="true">event_available</span><span class="tab-label" id="tabBookedLabel">My bookings</span>
+        <span class="tab-badge" id="bookedBadge" hidden></span>
+      </button>
+    </div>
 
-    <!-- Typing is optional. Everything works by tapping the big buttons above. -->
-    <form class="composer" id="composer">
-      <button type="button" class="mic" id="btnMic" aria-label="Speak instead of typing">
-        <span class="ms" aria-hidden="true">mic</span>
-      </button>
-      <label class="sr-only" for="msgInput">Type a message to Robin</label>
-      <input id="msgInput" class="composer-input" type="text" placeholder="Type, or tap a button" autocomplete="off" />
-      <button type="submit" class="send" aria-label="Send message">
-        <span class="ms" aria-hidden="true">send</span>
-      </button>
-    </form>
+    <!-- The conversation. role="log" + aria-live means a screen reader speaks each new message. -->
+    <div class="panel" id="panelFind" role="tabpanel" aria-labelledby="tabFind">
+      <main class="chat" id="chat" role="log" aria-live="polite" aria-relevant="additions" tabindex="-1"></main>
+    </div>
+
+    <!-- Booked appointments: tap a card to select it, then the big red button cancels.
+         A confirm step guards the destructive action; role="status" announces results. -->
+    <div class="panel" id="panelBooked" role="tabpanel" aria-labelledby="tabBooked" hidden>
+      <div class="booked-scroll">
+        <h2 class="booked-title" id="bookedTitle" tabindex="-1">Your booked activities</h2>
+        <p class="booked-help" id="bookedHelp"></p>
+        <ul class="booked-list" id="bookedList"></ul>
+        <div class="booked-empty" id="bookedEmpty" hidden>
+          <img src="assets/pictograms/clock.png" alt="" />
+          <p class="booked-empty-title" id="bookedEmptyText"></p>
+          <p class="booked-empty-hint" id="bookedEmptyHint"></p>
+        </div>
+      </div>
+      <div class="booked-footer">
+        <p class="booked-status" id="bookedStatus" role="status"></p>
+        <div class="confirm" id="confirmBox" hidden tabindex="-1">
+          <p class="confirm-text" id="confirmText"></p>
+          <div class="confirm-actions">
+            <button type="button" class="btn danger" id="btnConfirmYes">
+              <span class="ms" aria-hidden="true">check</span><span id="confirmYesLabel"></span>
+            </button>
+            <button type="button" class="btn" id="btnConfirmNo">
+              <span class="ms" aria-hidden="true">close</span><span id="confirmNoLabel"></span>
+            </button>
+          </div>
+        </div>
+        <button type="button" class="btn-cancel" id="btnCancel" hidden>
+          <span class="ms" aria-hidden="true">event_busy</span><span id="btnCancelLabel"></span>
+        </button>
+      </div>
+    </div>
 
     <p class="credit">
       Symbols: <a href="https://arasaac.org" target="_blank" rel="noopener">ARASAAC</a> — Sergio Palao, Gobierno de Aragón (CC BY-NC-SA)
@@ -123,6 +142,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

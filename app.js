@@ -29,7 +29,7 @@ const state = {
 /* ---------- strings (English, French, Spanish) ---------- */
 const S = {
   en: {
-    greeting: "Hi, I'm Robin. I help you find free things to do near you.",
+    greeting: "Hi, I'm Robin. Tap one picture. I'll show you something nearby.",
     firstThen: "First: tap a picture. Then: I show you what's on.",
     whatNeed: "What do you need today?",
     whenGo: "When do you want to go?",
@@ -58,7 +58,9 @@ const S = {
     contrast: "High contrast", readAloud: "Read aloud", language: "Language",
     on: "On", off: "Off", forOrgs: "For organizations",
     cats: { food:"Food", people:"Meet people", kids:"Kids & family", health:"Health", learn:"Learn", money:"Money help" },
+    notSure: "I'm not sure — show me anything", back: "Go back",
     free: "Free",
+    register: "Register", registrationNeeded: "Sign-up needed",
     justWalkIn: "Just walk in", stepFree: "Step-free", asl: "ASL",
     onbSkip: "Skip setup", onbNext: "Next", onbBack: "Back", onbDone: "Done",
     locTitle: "Where are you?", locSub: "This helps me find things close to you.",
@@ -68,9 +70,22 @@ const S = {
     age: { child:"Under 12", teen:"13 to 17", adult:"18 to 64", senior:"65 and up" },
     accessTitle: "Any accessibility needs?", accessSub: "Pick as many as you like. This is just for you.",
     access: { lowvision:"Low vision or blind", deaf:"Deaf or hard of hearing", mobility:"Physical or mobility needs", intellectual:"Intellectual or learning disability", sensory:"Autism or sensory sensitivity", none:"None of these" },
+    tabFind: "Find things",
+    tabBooked: "My bookings",
+    bookedTitle: "Your booked activities",
+    bookedHelp: "Tap a booking to select it. Then tap the big red button to cancel it.",
+    bookedEmpty: "No bookings yet.",
+    bookedEmptyHint: "When you tap \"I'll go\" on an activity, it will show up here.",
+    selectWord: "Select", selectedWord: "Selected",
+    cancelBtn: "Cancel selected bookings",
+    selectFirst: "First tap a booking above, then tap the red button.",
+    confirmQ: "Are you sure you want to cancel?",
+    confirmYes: "Yes, cancel", confirmNo: "No, keep",
+    cancelledMsg: "Done — cancelled. You can book it again any time.",
+    bookedAdded: "Saved to My bookings. You can see or cancel it in the My bookings tab.",
   },
   fr: {
-    greeting: "Bonjour, je m'appelle Robin. Je t'aide à trouver des activités gratuites près de chez toi.",
+    greeting: "Bonjour, je m'appelle Robin. Touche une image. Je te montrerai quelque chose près de chez toi.",
     firstThen: "D'abord : touche une image. Ensuite : je te montre ce qu'il y a.",
     whatNeed: "De quoi as-tu besoin aujourd'hui ?",
     whenGo: "Quand veux-tu y aller ?",
@@ -99,7 +114,9 @@ const S = {
     contrast: "Contraste élevé", readAloud: "Lecture à voix haute", language: "Langue",
     on: "Activé", off: "Désactivé", forOrgs: "Pour les organismes",
     cats: { food:"Nourriture", people:"Rencontrer des gens", kids:"Enfants et famille", health:"Santé", learn:"Apprendre", money:"Aide financière" },
+    notSure: "Je ne sais pas — montre-moi tout", back: "Retour",
     free: "Gratuit",
+    register: "S'inscrire", registrationNeeded: "Inscription requise",
     justWalkIn: "Entre sans rendez-vous", stepFree: "Sans marches", asl: "ASL",
     onbSkip: "Passer", onbNext: "Suivant", onbBack: "Retour", onbDone: "Terminé",
     locTitle: "Où es-tu ?", locSub: "Ça m'aide à trouver des activités près de chez toi.",
@@ -109,9 +126,22 @@ const S = {
     age: { child:"Moins de 12 ans", teen:"13 à 17 ans", adult:"18 à 64 ans", senior:"65 ans et plus" },
     accessTitle: "As-tu des besoins d'accessibilité ?", accessSub: "Choisis-en autant que tu veux. C'est juste pour toi.",
     access: { lowvision:"Basse vision ou aveugle", deaf:"Sourd ou malentendant", mobility:"Besoins physiques ou de mobilité", intellectual:"Déficience intellectuelle ou trouble d'apprentissage", sensory:"Autisme ou sensibilité sensorielle", none:"Aucun de ces besoins" },
+    tabFind: "Trouver",
+    tabBooked: "Mes réservations",
+    bookedTitle: "Tes activités réservées",
+    bookedHelp: "Touche une réservation pour la choisir. Ensuite, touche le grand bouton rouge pour l'annuler.",
+    bookedEmpty: "Aucune réservation pour l'instant.",
+    bookedEmptyHint: "Quand tu touches « J'y vais », l'activité apparaît ici.",
+    selectWord: "Choisir", selectedWord: "Choisie",
+    cancelBtn: "Annuler les réservations choisies",
+    selectFirst: "Touche d'abord une réservation, puis le bouton rouge.",
+    confirmQ: "Es-tu sûr de vouloir annuler ?",
+    confirmYes: "Oui, annuler", confirmNo: "Non, garder",
+    cancelledMsg: "C'est fait — annulé. Tu peux réserver à nouveau quand tu veux.",
+    bookedAdded: "Ajouté à Mes réservations. Tu peux la voir ou l'annuler dans l'onglet Mes réservations.",
   },
   es: {
-    greeting: "Hola, soy Robin. Te ayudo a encontrar cosas gratis cerca de ti.",
+    greeting: "Hola, soy Robin. Toca una imagen. Te mostraré algo cerca de ti.",
     firstThen: "Primero: toca una imagen. Después: te muestro qué hay.",
     whatNeed: "¿Qué necesitas hoy?",
     whenGo: "¿Cuándo quieres ir?",
@@ -140,7 +170,9 @@ const S = {
     contrast: "Contraste alto", readAloud: "Leer en voz alta", language: "Idioma",
     on: "Activado", off: "Desactivado", forOrgs: "Para organizaciones",
     cats: { food:"Comida", people:"Conocer gente", kids:"Niños y familia", health:"Salud", learn:"Aprender", money:"Ayuda con dinero" },
+    notSure: "No estoy seguro — muéstrame todo", back: "Volver",
     free: "Gratis",
+    register: "Inscribirme", registrationNeeded: "Inscripción necesaria",
     justWalkIn: "Entra sin cita", stepFree: "Sin escalones", asl: "ASL",
     onbSkip: "Omitir", onbNext: "Siguiente", onbBack: "Atrás", onbDone: "Listo",
     locTitle: "¿Dónde estás?", locSub: "Esto me ayuda a encontrar cosas cerca de ti.",
@@ -150,6 +182,19 @@ const S = {
     age: { child:"Menos de 12", teen:"13 a 17", adult:"18 a 64", senior:"65 o más" },
     accessTitle: "¿Tienes alguna necesidad de accesibilidad?", accessSub: "Elige tantas como quieras. Esto es solo para ti.",
     access: { lowvision:"Baja visión o ciego", deaf:"Sordo o con dificultad auditiva", mobility:"Necesidades físicas o de movilidad", intellectual:"Discapacidad intelectual o de aprendizaje", sensory:"Autismo o sensibilidad sensorial", none:"Ninguna de estas" },
+    tabFind: "Buscar",
+    tabBooked: "Mis reservas",
+    bookedTitle: "Tus actividades reservadas",
+    bookedHelp: "Toca una reserva para elegirla. Después toca el botón rojo grande para cancelarla.",
+    bookedEmpty: "Todavía no tienes reservas.",
+    bookedEmptyHint: "Cuando toques «Voy a ir», la actividad aparecerá aquí.",
+    selectWord: "Elegir", selectedWord: "Elegida",
+    cancelBtn: "Cancelar las reservas elegidas",
+    selectFirst: "Primero toca una reserva, después el botón rojo.",
+    confirmQ: "¿Seguro que quieres cancelar?",
+    confirmYes: "Sí, cancelar", confirmNo: "No, conservar",
+    cancelledMsg: "Listo — cancelado. Puedes reservar otra vez cuando quieras.",
+    bookedAdded: "Guardado en Mis reservas. Puedes verla o cancelarla en la pestaña Mis reservas.",
   },
 };
 const t = key => S[state.lang][key];
@@ -263,8 +308,8 @@ const ELEVEN_API_KEY  = '653d8c29147ad8e3cd2f3a57fab476ad5dd992a7e1f7f9fe3113d96
 const ELEVEN_VOICE_ID = 'EXAVITQu4vr4xnSDxMaL';   /* "Sarah" — warm, reassuring, free-plan voice */
 const ELEVEN_MODEL    = 'eleven_multilingual_v2'; /* handles en / fr / es */
 
-let currentAudio = null;                 /* the utterance currently playing */
-const _ttsCache = new Map();             /* lang|text -> object URL, avoids re-fetching */
+let currentAudio = null;
+const _ttsCache = new Map();
 
 /* Browsers block audio until the user interacts with the page. Track that
    first gesture so the opening greeting can play in the ElevenLabs voice. */
@@ -387,8 +432,7 @@ function addOptions(options, { stack } = {}) {
     const btn = el(`<button type="button" class="opt ${o.cls || ''} ${o.pict ? '' : 'simple'}">${visual}<span></span></button>`);
     btn.querySelector('span:last-child').textContent = o.label;
     btn.addEventListener('click', () => {
-      box.querySelectorAll('button').forEach(b => { b.disabled = true; });
-      btn.classList.add('picked');
+      wrap.remove();
       o.onPick();
     });
     box.appendChild(btn);
@@ -399,11 +443,14 @@ function addOptions(options, { stack } = {}) {
 
 /* Easy Read card: one fact + one picture per row. */
 function addCard(ev) {
-  const dayName = DAY_NAMES[state.lang][ev.day];
-  const chips = (ev.access || []).map(a => {
+  const dayName = ev.date
+    ? new Date(`${ev.date}T12:00:00`).toLocaleDateString(VOICE_LANG[state.lang], { weekday:'long', month:'long', day:'numeric' })
+    : DAY_NAMES[state.lang][ev.day];
+  let chips = (ev.access || []).map(a => {
     const chipPict = { stepFree:'wheelchair', asl:'deaf', justWalkIn:'welcome' }[a];
     return `<span class="chip"><img src="${pict(chipPict)}" alt="">${t(a)}</span>`;
   }).join('');
+  if (ev.registrationRequired) chips += `<span class="chip"><span class="ms" aria-hidden="true">how_to_reg</span>${t('registrationNeeded')}</span>`;
   const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(ev.place);
   const card = el(`
     <div class="row guide"><div class="card">
@@ -421,11 +468,18 @@ function addCard(ev) {
           <button type="button" class="btn primary act-go"><span class="ms" aria-hidden="true">check</span>${t('go')}</button>
           <a class="btn" href="${mapsUrl}" target="_blank" rel="noopener"><span class="ms" aria-hidden="true">map</span>${t('directions')}</a>
         </div>
+        <a class="btn act-register" hidden target="_blank" rel="noopener"><span class="ms" aria-hidden="true">how_to_reg</span>${t('register')}</a>
       </div>
     </div></div>`);
   card.querySelector('.card-title').textContent = ev.title;
   card.querySelector('.card-org').textContent = ev.org;
   card.querySelector('.card-place').textContent = ev.place;
+  if (ev.registrationRequired && ev.registrationUrl) {
+    const registerLink = card.querySelector('.act-register');
+    registerLink.href = ev.registrationUrl;
+    registerLink.hidden = false;
+  }
+
 
   const spokenCard = `${ev.title}. ${dayName}, ${ev.time}. ${ev.place}. ${t('free')}.`;
   card.querySelector('.act-go').addEventListener('click', function () {
@@ -433,8 +487,10 @@ function addCard(ev) {
     /* analytics seed: count "I'll go" taps (the spec's nice-to-have) */
     const n = +(localStorage.getItem('belong-going') || 0) + 1;
     localStorage.setItem('belong-going', n);
+    addBooking(ev);
     addUser(t('go'));
     addGuide(t('great'));
+    addGuide(t('bookedAdded'));
     askReminder(ev);
   });
   chat.appendChild(card);
@@ -594,21 +650,24 @@ function startOnboarding() {
   onbIndex = 0;
   renderOnboardStep();
 }
-$('#onbSkip').addEventListener('click', finishOnboarding);
+$('#onbSkip')?.addEventListener('click', finishOnboarding);
 
 /* ---------- conversation flow ---------- */
 function greet() {
   addGuide(t('greeting'));
-  addGuide(t('firstThen'));   /* First-Then board: announce the sequence */
   askCategory(t('whatNeed'));
 }
 
 function askCategory(prompt) {
   addGuide(prompt);
-  addOptions(CATS.map(c => ({
+  const choices = CATS.map(c => ({
     pict: c.pict, cls: c.cls, label: t('cats')[c.key],
     onPick: () => { addUser(t('cats')[c.key], c.pict); state.cat = c.key; askWhen(); },
-  })));
+  }));
+  choices.push({ pict:'help', cls:'c-learn', label:t('notSure'), onPick:() => {
+    addUser(t('notSure'), 'help'); state.cat = null; askWhen();
+  }});
+  addOptions(choices);
 }
 
 function askWhen() {
@@ -617,17 +676,34 @@ function askWhen() {
     { ms:'today',          label:t('today'), onPick:() => { addUser(t('today')); pickEvents('today'); } },
     { ms:'date_range',     label:t('week'),  onPick:() => { addUser(t('week'));  pickEvents('week'); } },
     { ms:'all_inclusive',  label:t('any'),   onPick:() => { addUser(t('any'));   pickEvents('any'); } },
+    { ms:'arrow_back',     label:t('back'),  onPick:() => { addUser(t('back')); askCategory(t('whatNeed')); } },
   ], { stack:true });
 }
 
 function pickEvents(when) {
-  const inCat = EVENTS.filter(e => e.cat === state.cat);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const inCat = EVENTS.filter(e => {
+    if (state.cat && e.cat !== state.cat) return false;
+    if (!e.date) return true;
+    const eventDate = new Date(`${e.date}T12:00:00`);
+    const visibleFrom = e.notifyAt ? new Date(e.notifyAt) : new Date(eventDate);
+    if (!e.notifyAt) visibleFrom.setDate(visibleFrom.getDate() - (e.noticeDays || 3));
+    return now >= visibleFrom && eventDate >= now;
+  });
   let list = inCat;
   let intro = t('hereOne');
   if (when === 'today') {
-    const todays = inCat.filter(e => e.day === new Date().getDay());
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const todays = inCat.filter(e => e.date ? e.date === todayIso : e.day === new Date().getDay());
     if (todays.length) list = todays;
     else if (inCat.length) intro = t('noneToday'); /* graceful fallback, never a dead end */
+  }
+  if (when === 'week') {
+    const weekEnd = new Date(now);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    const dated = inCat.filter(e => !e.date || new Date(`${e.date}T12:00:00`) <= weekEnd);
+    if (dated.length) list = dated;
   }
   if (!list.length) { addGuide(t('noneCat')); return askCategory(t('whatNeed')); }
   state.queue = list.slice();
@@ -694,14 +770,14 @@ function routeText(raw) {
   askCategory(t('dontUnderstand'));
 }
 
-$('#composer').addEventListener('submit', e => {
+$('#composer')?.addEventListener('submit', e => {
   e.preventDefault();
   const input = $('#msgInput');
   if (input.value.trim()) routeText(input.value.trim());
   input.value = '';
 });
 
-$('#btnMic').addEventListener('click', () => {
+$('#btnMic')?.addEventListener('click', () => {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return addGuide(t('noMic'));
   const rec = new SR();
@@ -740,6 +816,12 @@ function applySettings() {
   $('#valueText').textContent = { normal:t('textNormal'), large:t('textLarge'), xlarge:t('textXlarge') }[state.text];
   $('#valueContrast').textContent = state.contrast ? t('on') : t('off');
   $('#valueSound').textContent = state.sound ? t('on') : t('off');
+
+  /* Tabs (remote feature) re-label with the language too. */
+  $('#tabFindLabel').textContent = t('tabFind');
+  $('#tabBookedLabel').textContent = t('tabBooked');
+  updateBookedBadge();
+  if (!$('#panelBooked').hidden) renderBooked(); /* re-label in the new language */
 }
 
 /* Full-screen settings panel, opened from the header gear. The chat keeps
@@ -797,13 +879,186 @@ function restart() {
   stopSpeech();
   chat.innerHTML = '';
   state.cat = null; state.queue = []; state.shown = 0;
-  localStorage.removeItem('belong-onboarded');
-  onbAnswers.location = null; onbAnswers.interests = []; onbAnswers.age = null; onbAnswers.access = [];
-  startOnboarding();
+  switchTab(0);
+  greet();
 }
 $('#startOver').addEventListener('click', restart);
 
+/* ============================================================
+   Tabs + booked appointments
+   Same ground rules as the rest of the app: big targets, colour
+   never alone, every action announced, and no dead ends — the red
+   button explains itself instead of silently doing nothing.
+   ============================================================ */
+
+/* ---------- tabs (WAI-ARIA pattern: roving tabindex, arrows move) ---------- */
+const TABS = [
+  { btn: $('#tabFind'),   panel: $('#panelFind') },
+  { btn: $('#tabBooked'), panel: $('#panelBooked') },
+];
+let activeTab = 0;
+
+function switchTab(i, { focus } = {}) {
+  activeTab = i;
+  TABS.forEach((tab, j) => {
+    const on = i === j;
+    tab.btn.setAttribute('aria-selected', String(on));
+    tab.btn.tabIndex = on ? 0 : -1;
+    tab.panel.hidden = !on;
+  });
+  $('#composer')?.toggleAttribute('hidden', i !== 0); /* typing to Robin only applies while finding */
+  if (i === 1) renderBooked();
+  if (focus) TABS[i].btn.focus();
+  if (state.sound) speak(i === 1 ? t('bookedTitle') : t('tabFind'));
+}
+
+TABS.forEach((tab, i) => tab.btn.addEventListener('click', () => switchTab(i)));
+
+$('.tabs').addEventListener('keydown', e => {
+  const jump = { Home: 0, End: TABS.length - 1 };
+  const step = { ArrowLeft: -1, ArrowRight: 1 };
+  if (e.key in step) {
+    e.preventDefault();
+    switchTab((activeTab + step[e.key] + TABS.length) % TABS.length, { focus: true });
+  } else if (e.key in jump) {
+    e.preventDefault();
+    switchTab(jump[e.key], { focus: true });
+  }
+});
+
+/* ---------- booked storage ---------- */
+const loadBooked = () => JSON.parse(localStorage.getItem('belong-booked') || '[]');
+const saveBookedList = list => localStorage.setItem('belong-booked', JSON.stringify(list));
+const selectedIds = new Set();
+
+function addBooking(ev) {
+  const list = loadBooked();
+  if (list.some(b => b.title === ev.title && b.day === ev.day && b.time === ev.time)) return;
+  list.push({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    title: ev.title, org: ev.org, day: ev.day, time: ev.time,
+    place: ev.place, cat: ev.cat, pict: ev.pict,
+  });
+  saveBookedList(list);
+  updateBookedBadge();
+}
+
+/* Count on the tab, and in its spoken name for screen readers. */
+function updateBookedBadge() {
+  const n = loadBooked().length;
+  const badge = $('#bookedBadge');
+  badge.hidden = !n;
+  badge.textContent = n;
+  $('#tabBooked').setAttribute('aria-label', t('tabBooked') + (n ? `, ${n}` : ''));
+}
+
+/* role="status" region: screen readers announce this without moving focus. */
+function setBookedStatus(msg) {
+  $('#bookedStatus').textContent = msg;
+  if (state.sound && msg) speak(msg);
+}
+
+const hideConfirm = () => { $('#confirmBox').hidden = true; };
+
+function syncCancelBtn() {
+  const n = selectedIds.size;
+  $('#btnCancelLabel').textContent = n ? `${t('cancelBtn')} (${n})` : t('cancelBtn');
+  /* aria-disabled, not disabled: stays reachable, and tapping it explains
+     the next step instead of doing nothing (COGA: no dead ends). */
+  $('#btnCancel').setAttribute('aria-disabled', String(!n));
+}
+
+function renderBooked() {
+  const list = loadBooked();
+  selectedIds.forEach(id => { if (!list.some(b => b.id === id)) selectedIds.delete(id); });
+
+  $('#bookedTitle').textContent = t('bookedTitle');
+  $('#bookedHelp').textContent = t('bookedHelp');
+  $('#bookedHelp').hidden = !list.length;
+  $('#bookedEmptyText').textContent = t('bookedEmpty');
+  $('#bookedEmptyHint').textContent = t('bookedEmptyHint');
+  $('#bookedEmpty').hidden = !!list.length;
+  $('#btnCancel').hidden = !list.length;
+  hideConfirm();
+
+  const ul = $('#bookedList');
+  ul.innerHTML = '';
+  list.forEach(b => {
+    /* Selectable card: a real button with role="checkbox", so Enter and
+       Space both work and the checked state is spoken. Selection is shown
+       three ways — accent border, filled check, and the word itself. */
+    const li = el(`
+      <li class="booked-item">
+        <button type="button" class="booked-card c-${b.cat}" role="checkbox" aria-checked="false">
+          <span class="dot"><img src="${pict(b.pict)}" alt=""></span>
+          <span class="booked-info">
+            <span class="booked-name"></span>
+            <span class="booked-org"></span>
+            <span class="booked-meta"><img src="${pict('clock')}" alt="">${DAY_NAMES[state.lang][b.day]}, ${b.time}</span>
+            <span class="booked-meta"><img src="${pict('place')}" alt=""><span class="booked-place"></span></span>
+          </span>
+          <span class="booked-check"><span class="ms" aria-hidden="true">check</span><span class="booked-check-word"></span></span>
+        </button>
+      </li>`);
+    li.querySelector('.booked-name').textContent = b.title;
+    li.querySelector('.booked-org').textContent = b.org;
+    li.querySelector('.booked-place').textContent = b.place;
+    const btn = li.querySelector('.booked-card');
+    const word = li.querySelector('.booked-check-word');
+    const sync = () => {
+      const on = selectedIds.has(b.id);
+      btn.setAttribute('aria-checked', String(on));
+      word.textContent = on ? t('selectedWord') : t('selectWord');
+    };
+    sync();
+    btn.addEventListener('click', () => {
+      selectedIds.has(b.id) ? selectedIds.delete(b.id) : selectedIds.add(b.id);
+      sync();
+      syncCancelBtn();
+      hideConfirm();
+      setBookedStatus('');
+      if (state.sound) speak(`${b.title}. ${selectedIds.has(b.id) ? t('selectedWord') : t('selectWord')}`);
+    });
+    ul.appendChild(li);
+  });
+
+  syncCancelBtn();
+  updateBookedBadge();
+}
+
+/* Big red button → confirm step → cancel. Never destroys on first tap. */
+$('#btnCancel').addEventListener('click', () => {
+  if (!selectedIds.size) return setBookedStatus(t('selectFirst'));
+  setBookedStatus('');
+  $('#confirmText').textContent = t('confirmQ');
+  $('#confirmYesLabel').textContent = t('confirmYes');
+  $('#confirmNoLabel').textContent = t('confirmNo');
+  const box = $('#confirmBox');
+  box.hidden = false;
+  box.focus(); /* the reader lands on the question, not past it */
+  if (state.sound) speak(t('confirmQ'));
+});
+
+$('#btnConfirmYes').addEventListener('click', () => {
+  const all = loadBooked();
+  const gone = all.filter(b => selectedIds.has(b.id));
+  saveBookedList(all.filter(b => !selectedIds.has(b.id)));
+  /* a cancelled booking shouldn't still fire its reminder */
+  const reminders = JSON.parse(localStorage.getItem('belong-reminders') || '[]')
+    .filter(r => !gone.some(b => b.title === r.title && b.day === r.day && b.time === r.time));
+  localStorage.setItem('belong-reminders', JSON.stringify(reminders));
+  selectedIds.clear();
+  renderBooked();
+  setBookedStatus(t('cancelledMsg'));
+  $('#bookedTitle').focus(); /* confirm box is gone; land somewhere real */
+});
+
+$('#btnConfirmNo').addEventListener('click', () => {
+  hideConfirm();
+  setBookedStatus('');
+  $('#btnCancel').focus();
+});
+
 /* ---------- go ---------- */
 applySettings();
-if (localStorage.getItem('belong-onboarded') === '1') greet();
-else startOnboarding();
+greet();
