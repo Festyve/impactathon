@@ -200,6 +200,7 @@ html, body {
 .row { display: flex; flex-direction: column; max-width: 100%; }
 .row.guide { align-items: flex-start; }
 .row.user  { align-items: flex-end; }
+.row.msg   { flex-direction: row; align-items: center; gap: 4px; }
 
 .bubble {
   max-width: 86%;
@@ -221,12 +222,58 @@ html, body {
 /* Small icon-only "replay this aloud" button under a guide bubble. */
 .replay {
   display: inline-flex; align-items: center; justify-content: center;
-  margin-top: 4px; width: 40px; height: 40px; padding: 0;
+  flex: 0 0 auto; width: 40px; height: 40px; padding: 0;
   border: none; border-radius: 50%;
   background: transparent; color: var(--ink-soft); cursor: pointer;
 }
 .replay:hover { background: var(--guide-bg); }
 .replay .ms { font-size: 1.25rem; }
+
+/* ---------- Phone-style notification banner ----------
+   Emulates an incoming text/push notification for a newly posted event. */
+.notif {
+  position: fixed; top: 10px; left: 0; right: 0; z-index: 60;
+  display: flex; justify-content: center;
+  padding: 0 12px; pointer-events: none;
+}
+.notif-card {
+  pointer-events: auto;
+  display: block; text-align: left; cursor: pointer;
+  width: 100%; max-width: 430px;
+  background: var(--card); color: var(--ink);
+  border: 2px solid var(--line); border-radius: 20px;
+  padding: 12px 14px;
+  font-family: var(--font); font-size: 1rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .18);
+  animation: notif-drop .35s ease-out;
+}
+.notif.hide .notif-card { animation: notif-fade .25s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .notif-card { animation: none; }
+  .notif.hide .notif-card { animation: none; opacity: 0; }
+}
+@keyframes notif-drop {
+  from { transform: translateY(-120%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+@keyframes notif-fade {
+  to { opacity: 0; transform: translateY(-8px); }
+}
+.notif-head {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 6px;
+  font-size: .85rem; font-weight: 700; color: var(--ink-soft);
+}
+.notif-avatar {
+  width: 26px; height: 26px; border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--guide-bg); color: var(--ink);
+  font-size: 1rem;
+}
+.notif-when { margin-left: auto; font-weight: 400; }
+.notif-title { display: block; margin: 0; font-size: 1.02rem; font-weight: 700; }
+.notif-body { display: block; margin: 2px 0 0; font-size: .98rem; line-height: 1.4; }
+:root[data-contrast="high"] .notif-card { border: 2px solid #fff; }
 
 /* Typing indicator */
 .typing { display: flex; gap: 5px; padding: 14px 18px; }
@@ -261,6 +308,7 @@ html, body {
 .opt .dot .ms { font-size: 1.55rem; }
 .opt.simple { justify-content: center; }
 .opt.simple .ms { font-size: 1.35rem; margin-right: 4px; }
+.opt.full { grid-column: 1 / -1; }
 
 /* Category colour map — colour + icon + word together, always. */
 .c-food   .dot { background: var(--food-bg);   color: var(--food-ink); }

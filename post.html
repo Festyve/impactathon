@@ -367,6 +367,8 @@
       if (document.getElementById('aWalkIn').checked) access.push('justWalkIn');
       if (document.getElementById('aAsl').checked) access.push('asl');
       const ev = {
+        id: 'ev-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+        postedAt: new Date().toISOString(),
         cat,
         pict: cat,
         title: document.getElementById('fTitle').value.trim(),

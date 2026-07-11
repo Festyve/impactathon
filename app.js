@@ -83,6 +83,8 @@ const S = {
     confirmYes: "Yes, cancel", confirmNo: "No, keep",
     cancelledMsg: "Done — cancelled. You can book it again any time.",
     bookedAdded: "Saved to My bookings. You can see or cancel it in the My bookings tab.",
+    notifNew: "New event!",
+    notifNow: "now",
   },
   fr: {
     greeting: "Bonjour, je m'appelle Robin. Touche une image. Je te montrerai quelque chose près de chez toi.",
@@ -139,6 +141,8 @@ const S = {
     confirmYes: "Oui, annuler", confirmNo: "Non, garder",
     cancelledMsg: "C'est fait — annulé. Tu peux réserver à nouveau quand tu veux.",
     bookedAdded: "Ajouté à Mes réservations. Tu peux la voir ou l'annuler dans l'onglet Mes réservations.",
+    notifNew: "Nouvel événement !",
+    notifNow: "maintenant",
   },
   es: {
     greeting: "Hola, soy Robin. Toca una imagen. Te mostraré algo cerca de ti.",
@@ -195,6 +199,8 @@ const S = {
     confirmYes: "Sí, cancelar", confirmNo: "No, conservar",
     cancelledMsg: "Listo — cancelado. Puedes reservar otra vez cuando quieras.",
     bookedAdded: "Guardado en Mis reservas. Puedes verla o cancelarla en la pestaña Mis reservas.",
+    notifNew: "¡Nuevo evento!",
+    notifNow: "ahora",
   },
 };
 const t = key => S[state.lang][key];
@@ -234,7 +240,8 @@ const BUILTIN_EVENTS = [
   { cat:'money',  pict:'money',   title:'Free tax clinic',            org:'The Working Centre',              day:4, time:'1:00 pm',  place:'58 Queen St S, Kitchener',     access:['stepFree'] },
 ];
 /* Events posted by organizations through post.html join the same pool. */
-const EVENTS = BUILTIN_EVENTS.concat(JSON.parse(localStorage.getItem('belong-events') || '[]'));
+const postedEvents = () => JSON.parse(localStorage.getItem('belong-events') || '[]');
+let EVENTS = BUILTIN_EVENTS.concat(postedEvents());
 
 const DAY_NAMES = {
   en:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
@@ -397,7 +404,7 @@ async function speak(text) {
 
 /* ---------- chat primitives ---------- */
 function addGuide(text, { spoken } = {}) {
-  const row = el(`<div class="row guide"><div class="bubble"></div></div>`);
+  const row = el(`<div class="row guide msg"><div class="bubble"></div></div>`);
   row.querySelector('.bubble').textContent = text;
   const say = spoken || text;
   const replay = el(
@@ -429,7 +436,7 @@ function addOptions(options, { stack } = {}) {
     const visual = o.pict
       ? `<span class="dot"><img src="${pict(o.pict)}" alt=""></span>`
       : (o.ms ? `<span class="ms" aria-hidden="true">${o.ms}</span>` : '');
-    const btn = el(`<button type="button" class="opt ${o.cls || ''} ${o.pict ? '' : 'simple'}">${visual}<span></span></button>`);
+    const btn = el(`<button type="button" class="opt ${o.cls || ''} ${o.pict ? '' : 'simple'} ${o.full ? 'full' : ''}">${visual}<span></span></button>`);
     btn.querySelector('span:last-child').textContent = o.label;
     btn.addEventListener('click', () => {
       wrap.remove();
@@ -664,7 +671,7 @@ function askCategory(prompt) {
     pict: c.pict, cls: c.cls, label: t('cats')[c.key],
     onPick: () => { addUser(t('cats')[c.key], c.pict); state.cat = c.key; askWhen(); },
   }));
-  choices.push({ pict:'help', cls:'c-learn', label:t('notSure'), onPick:() => {
+  choices.push({ pict:'help', cls:'c-learn', full:true, label:t('notSure'), onPick:() => {
     addUser(t('notSure'), 'help'); state.cat = null; askWhen();
   }});
   addOptions(choices);
@@ -1059,6 +1066,78 @@ $('#btnConfirmNo').addEventListener('click', () => {
   $('#btnCancel').focus();
 });
 
+/* ---------- posted-event notifications ----------
+   The prototype's "backend": events posted from post.html land in
+   localStorage. When one's organizer-chosen notice time arrives, the
+   member side surfaces it as a phone-style banner — the way a real
+   deployment would send a push notification or SMS. The storage event
+   makes it live across tabs: post in one tab, the banner drops in here. */
+const notifSeen = () => JSON.parse(localStorage.getItem('belong-notified') || '[]');
+let notifCurrent = null;
+
+function notifDue() {
+  const seen = notifSeen();
+  const now = new Date();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return postedEvents().filter(e => {
+    if (!e.id || seen.includes(e.id)) return false;
+    if (!e.date) return true;
+    const eventDate = new Date(`${e.date}T12:00:00`);
+    if (eventDate < today) return false;
+    const visibleFrom = e.notifyAt ? new Date(e.notifyAt) : new Date(eventDate);
+    if (!e.notifyAt) visibleFrom.setDate(visibleFrom.getDate() - (e.noticeDays || 3));
+    return now >= visibleFrom;
+  });
+}
+
+function checkNotifs() {
+  if (notifCurrent) return; /* one banner at a time */
+  const due = notifDue();
+  if (!due.length) return;
+  const ev = notifCurrent = due[0];
+  const dayName = ev.date
+    ? new Date(`${ev.date}T12:00:00`).toLocaleDateString(VOICE_LANG[state.lang], { weekday:'long', month:'long', day:'numeric' })
+    : DAY_NAMES[state.lang][ev.day];
+  $('#notifTitle').textContent = t('notifNew');
+  $('#notifBody').textContent = `${ev.title} — ${dayName}, ${ev.time}`;
+  $('#notifWhen').textContent = t('notifNow');
+  $('#notif').hidden = false;
+  if (state.sound) speak(`${t('notifNew')}. ${ev.title}`);
+}
+
+function closeNotif() {
+  const seen = notifSeen();
+  if (!seen.includes(notifCurrent.id)) seen.push(notifCurrent.id);
+  localStorage.setItem('belong-notified', JSON.stringify(seen));
+  notifCurrent = null;
+  const n = $('#notif');
+  n.classList.add('hide');
+  setTimeout(() => {
+    n.classList.remove('hide');
+    n.hidden = true;
+    checkNotifs(); /* another may be waiting */
+  }, 260);
+}
+
+/* Tapping the notification opens the event in the chat, then it fades away. */
+$('#notifCard').addEventListener('click', () => {
+  const ev = notifCurrent;
+  closeNotif();
+  switchTab(0);
+  state.queue = [ev];
+  state.shown = 0;
+  addGuide(t('hereOne'));
+  showNext();
+});
+
+window.addEventListener('storage', e => {
+  if (e.key !== 'belong-events') return;
+  EVENTS = BUILTIN_EVENTS.concat(postedEvents()); /* new posts join discovery without a refresh */
+  checkNotifs();
+});
+setInterval(checkNotifs, 30000); /* a notice time can arrive while the page is open */
+
 /* ---------- go ---------- */
 applySettings();
 greet();
+checkNotifs();

@@ -18,6 +18,20 @@
 <body>
   <a class="skip-link" href="#chat">Skip to messages</a>
 
+  <!-- Phone-style notification banner. When a nonprofit posts an event and its
+       notice time arrives, this slides in like an incoming text message. -->
+  <div class="notif" id="notif" hidden role="alert">
+    <button type="button" class="notif-card" id="notifCard">
+      <span class="notif-head">
+        <span class="notif-avatar ms" aria-hidden="true">volunteer_activism</span>
+        <span class="notif-app">Belong</span>
+        <span class="notif-when" id="notifWhen">now</span>
+      </span>
+      <span class="notif-title" id="notifTitle"></span>
+      <span class="notif-body" id="notifBody"></span>
+    </button>
+  </div>
+
   <div class="app" id="app">
     <!-- Who you're talking to. A named, friendly guide reads as a person, not a database. -->
     <header class="app-header">
